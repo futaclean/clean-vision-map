@@ -575,42 +575,47 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-4">
                 {recentReports.map((report) => (
-                  <div
+                  <Link
                     key={report.id}
-                    onClick={() => handleReportClick(report)}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+                    to={`/report/${report.id}`}
+                    className="block"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-foreground">
-                          {report.waste_type || 'General Waste'}
-                        </h4>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            report.status === 'resolved'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : report.status === 'in_progress'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}
-                        >
-                          {report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                        </span>
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-foreground">
+                            {report.waste_type || 'General Waste'}
+                          </h4>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              report.status === 'resolved'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : report.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {report.location_address || 'Location not specified'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(report.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {report.location_address || 'Location not specified'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(report.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
+                      <Button variant="ghost" size="sm" className="ml-4">
+                        Track →
+                      </Button>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
