@@ -53,6 +53,9 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [mapFilterStatus, setMapFilterStatus] = useState<string>("all");
+  const [mapFilterSeverity, setMapFilterSeverity] = useState<string>("all");
+  const [mapFilterType, setMapFilterType] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<WasteReport | null>(null);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -228,6 +231,13 @@ const AdminDashboard = () => {
   const filteredReports = reports.filter(report => {
     if (filterStatus !== "all" && report.status !== filterStatus) return false;
     if (filterType !== "all" && report.waste_type !== filterType) return false;
+    return true;
+  });
+
+  const mapFilteredReports = reports.filter(report => {
+    if (mapFilterStatus !== "all" && report.status !== mapFilterStatus) return false;
+    if (mapFilterSeverity !== "all" && report.severity !== mapFilterSeverity) return false;
+    if (mapFilterType !== "all" && report.waste_type !== mapFilterType) return false;
     return true;
   });
 
@@ -547,9 +557,69 @@ const AdminDashboard = () => {
                 </CardTitle>
                 <CardDescription>View all waste report locations on an interactive map</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Map Filters */}
+                <div className="flex flex-wrap gap-4">
+                  <Select value={mapFilterStatus} onValueChange={setMapFilterStatus}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={mapFilterSeverity} onValueChange={setMapFilterSeverity}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Severities</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={mapFilterType} onValueChange={setMapFilterType}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="plastic">Plastic</SelectItem>
+                      <SelectItem value="paper">Paper</SelectItem>
+                      <SelectItem value="food">Food Waste</SelectItem>
+                      <SelectItem value="hazardous">Hazardous</SelectItem>
+                      <SelectItem value="mixed">Mixed</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {(mapFilterStatus !== "all" || mapFilterSeverity !== "all" || mapFilterType !== "all") && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setMapFilterStatus("all");
+                        setMapFilterSeverity("all");
+                        setMapFilterType("all");
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+
+                  <div className="ml-auto text-sm text-muted-foreground flex items-center">
+                    Showing {mapFilteredReports.length} of {reports.length} reports
+                  </div>
+                </div>
+
                 <WasteReportsMap 
-                  reports={filteredReports} 
+                  reports={mapFilteredReports} 
                   onReportClick={handleViewReport}
                 />
               </CardContent>
