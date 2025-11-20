@@ -558,6 +558,27 @@ const AdminDashboard = () => {
                 <CardDescription>View all waste report locations on an interactive map</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Map Legend */}
+                <div className="flex flex-wrap gap-4 items-center p-4 bg-muted/30 rounded-lg">
+                  <span className="text-sm font-medium">Status Legend:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-[#ef4444] border-2 border-white shadow"></div>
+                    <span className="text-sm">Pending</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white shadow"></div>
+                    <span className="text-sm">In Progress</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white shadow"></div>
+                    <span className="text-sm">Resolved</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-[#3b82f6] border-2 border-white shadow"></div>
+                    <span className="text-sm">Rejected</span>
+                  </div>
+                </div>
+
                 {/* Map Filters */}
                 <div className="flex flex-wrap gap-4">
                   <Select value={mapFilterStatus} onValueChange={setMapFilterStatus}>

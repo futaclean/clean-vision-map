@@ -1,4 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,51 @@ interface WasteReportsMapProps {
   reports: WasteReport[];
   onReportClick?: (report: WasteReport) => void;
 }
+
+const getMarkerColor = (status: string | null): string => {
+  switch (status) {
+    case 'resolved':
+      return '#22c55e'; // green
+    case 'in_progress':
+      return '#eab308'; // yellow
+    case 'rejected':
+      return '#3b82f6'; // blue
+    case 'pending':
+    default:
+      return '#ef4444'; // red
+  }
+};
+
+const createColoredIcon = (color: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        background-color: ${color};
+        width: 24px;
+        height: 24px;
+        border-radius: 50% 50% 50% 0;
+        border: 3px solid white;
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      ">
+        <div style="
+          width: 8px;
+          height: 8px;
+          background-color: white;
+          border-radius: 50%;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        "></div>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24],
+  });
+};
 
 export const WasteReportsMap = ({ reports, onReportClick }: WasteReportsMapProps) => {
   const center: [number, number] = reports.length > 0 
@@ -44,12 +90,18 @@ export const WasteReportsMap = ({ reports, onReportClick }: WasteReportsMapProps
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {reports.map((report) => (
-          <Marker
-            key={report.id}
-            // @ts-ignore - react-leaflet types issue
-            position={[report.location_lat, report.location_lng]}
-          >
+        {reports.map((report) => {
+          const markerColor = getMarkerColor(report.status);
+          const customIcon = createColoredIcon(markerColor);
+          
+          return (
+            <Marker
+              key={report.id}
+              // @ts-ignore - react-leaflet types issue with custom icons
+              position={[report.location_lat, report.location_lng]}
+              // @ts-ignore
+              icon={customIcon}
+            >
             <Popup>
               <div className="p-2 min-w-[200px]">
                 <div className="flex items-center justify-between mb-2">
@@ -85,7 +137,8 @@ export const WasteReportsMap = ({ reports, onReportClick }: WasteReportsMapProps
               </div>
             </Popup>
           </Marker>
-        ))}
+        );
+        })}
       </MapContainer>
     </div>
   );
