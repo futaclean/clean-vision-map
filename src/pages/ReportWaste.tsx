@@ -35,6 +35,8 @@ const ReportWaste = () => {
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
+      console.log('Starting reverse geocoding for:', lat, lng);
+      
       // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
@@ -45,14 +47,18 @@ const ReportWaste = () => {
         }
       );
       
+      console.log('Geocoding response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Geocoding failed');
+        throw new Error(`Geocoding failed with status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Geocoding data received:', data);
       
       // Format a readable address from the response
       const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      console.log('Final address:', address);
       return address;
     } catch (error) {
       console.error("Reverse geocoding error:", error);
@@ -63,14 +69,23 @@ const ReportWaste = () => {
 
   const captureLocation = () => {
     setGettingLocation(true);
+    console.log('Capturing location...');
+    
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
+          console.log('GPS coordinates obtained:', latitude, longitude);
+          
           setLocation({ lat: latitude, lng: longitude });
           
           // Show coordinates immediately as a placeholder
           setLocationAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          
+          toast({
+            title: "Getting address...",
+            description: "Converting GPS to readable address",
+          });
           
           // Fetch the readable address in the background
           const address = await reverseGeocode(latitude, longitude);
@@ -79,7 +94,7 @@ const ReportWaste = () => {
           setGettingLocation(false);
           toast({
             title: "Location captured",
-            description: "Your GPS location and address have been recorded",
+            description: "Address obtained successfully",
           });
         },
         (error) => {
@@ -87,13 +102,19 @@ const ReportWaste = () => {
           setGettingLocation(false);
           toast({
             title: "Location error",
-            description: "Could not get your location. Please enable GPS.",
+            description: `Could not get your location: ${error.message}`,
             variant: "destructive",
           });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
       setGettingLocation(false);
+      console.error('Geolocation not supported');
       toast({
         title: "GPS not supported",
         description: "Your browser doesn't support geolocation",
