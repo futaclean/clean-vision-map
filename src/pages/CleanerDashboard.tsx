@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route } from "lucide-react";
 import { Link } from "react-router-dom";
+import { RouteOptimizer } from "@/components/RouteOptimizer";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface WasteReport {
   id: string;
@@ -228,10 +230,13 @@ const CleanerDashboard = () => {
                 <span className="text-xl font-bold text-white">Cleaner Dashboard</span>
               </div>
             </div>
-            <Button onClick={fetchReports} variant="outline" size="sm" className="text-white border-white hover:bg-white/10">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <Button onClick={fetchReports} variant="outline" size="sm" className="text-white border-white hover:bg-white/10">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -315,6 +320,10 @@ const CleanerDashboard = () => {
             <TabsTrigger value="all">All Reports</TabsTrigger>
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="route">
+              <Route className="h-4 w-4 mr-2" />
+              Route Planner
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -538,6 +547,19 @@ const CleanerDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Route Planner Tab */}
+          <TabsContent value="route" className="space-y-4">
+            <RouteOptimizer 
+              reports={reports.filter(r => r.status !== 'resolved')} 
+              onRouteCalculated={(distance, duration) => {
+                toast({
+                  title: "Route calculated",
+                  description: `${distance.toFixed(1)} km, ${Math.round(duration)} minutes`,
+                });
+              }}
+            />
           </TabsContent>
         </Tabs>
       </main>
