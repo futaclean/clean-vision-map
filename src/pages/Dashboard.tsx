@@ -17,6 +17,7 @@ const Dashboard = () => {
     resolved: 0,
     inProgress: 0
   });
+  const [recentReports, setRecentReports] = useState<any[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,6 +29,7 @@ const Dashboard = () => {
     if (user) {
       checkUserRole();
       fetchReportStats();
+      fetchRecentReports();
     }
   }, [user]);
 
@@ -65,6 +67,23 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchRecentReports = async () => {
+    try {
+      const { data: reports } = await supabase
+        .from('waste_reports')
+        .select('id, status, created_at, waste_type, location_address, severity')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (reports) {
+        setRecentReports(reports);
+      }
+    } catch (error) {
+      console.error('Error fetching recent reports:', error);
     }
   };
 
@@ -242,14 +261,56 @@ const Dashboard = () => {
             <CardDescription>Your latest waste reports</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">No reports yet</p>
-              <p className="text-sm mb-4">Start by reporting waste in your area</p>
-              <Button asChild className="bg-gradient-primary hover:opacity-90">
-                <Link to="/report">Create First Report</Link>
-              </Button>
-            </div>
+            {recentReports.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg mb-2">No reports yet</p>
+                <p className="text-sm mb-4">Start by reporting waste in your area</p>
+                <Button asChild className="bg-gradient-primary hover:opacity-90">
+                  <Link to="/report">Create First Report</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentReports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-semibold text-foreground">
+                          {report.waste_type || 'General Waste'}
+                        </h4>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            report.status === 'resolved'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : report.status === 'in_progress'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          }`}
+                        >
+                          {report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {report.location_address || 'Location not specified'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(report.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
