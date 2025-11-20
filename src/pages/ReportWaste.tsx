@@ -407,15 +407,18 @@ const ReportWaste = () => {
 
               {/* Location */}
               <div className="space-y-2">
-                <Label>GPS Location *</Label>
+                <Label htmlFor="location-address">GPS Location *</Label>
                 <div className="flex gap-2">
-                  <div className="flex-1 bg-muted rounded-md px-4 py-2 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground">
-                      {location
-                        ? locationAddress
-                        : "Location not captured"}
-                    </span>
+                  <div className="flex-1 relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      id="location-address"
+                      type="text"
+                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Location not captured"
+                      value={locationAddress}
+                      onChange={(e) => setLocationAddress(e.target.value)}
+                    />
                   </div>
                   <Button
                     type="button"
