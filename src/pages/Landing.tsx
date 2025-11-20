@@ -34,6 +34,9 @@ const Landing = () => {
                   <Link to="/auth">Get Started</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-lg px-8">
+                  <Link to="/auth">Cleaner Login</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-lg px-8">
                   <Link to="/auth">Admin Login</Link>
                 </Button>
               </div>
