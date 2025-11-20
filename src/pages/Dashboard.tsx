@@ -19,6 +19,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCleaner, setIsCleaner] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -118,13 +119,19 @@ const Dashboard = () => {
       const { data } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user!.id)
-        .eq('role', 'admin')
-        .single();
+        .eq('user_id', user!.id);
 
-      setIsAdmin(!!data);
+      if (data && data.length > 0) {
+        const roles = data.map(r => r.role);
+        setIsAdmin(roles.includes('admin'));
+        setIsCleaner(roles.includes('cleaner') || roles.includes('admin'));
+      } else {
+        setIsAdmin(false);
+        setIsCleaner(false);
+      }
     } catch (error) {
       setIsAdmin(false);
+      setIsCleaner(false);
     } finally {
       setIsChecking(false);
     }
@@ -431,6 +438,28 @@ const Dashboard = () => {
             <CardContent>
               <Button asChild className="bg-gradient-primary hover:opacity-90">
                 <Link to="/admin">Open Admin Dashboard</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cleaner Quick Access */}
+        {isCleaner && !isAdmin && (
+          <Card className="shadow-card border-border mb-8 bg-gradient-to-r from-blue-500/10 to-blue-500/5">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-600 rounded-xl p-3">
+                  <CheckCircle2 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle>Cleaner Dashboard</CardTitle>
+                  <CardDescription>View and manage your assigned reports</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link to="/cleaner">Open Cleaner Dashboard</Link>
               </Button>
             </CardContent>
           </Card>
