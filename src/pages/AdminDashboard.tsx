@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -84,6 +84,11 @@ const AdminDashboard = () => {
   const [newCleanerEmail, setNewCleanerEmail] = useState("");
   const [newCleanerName, setNewCleanerName] = useState("");
   const [newCleanerPassword, setNewCleanerPassword] = useState("");
+  
+  // Bulk import state
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -377,6 +382,129 @@ const AdminDashboard = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleBulkImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportResults(null);
+
+    try {
+      const text = await file.text();
+      const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+      
+      // Skip header row and filter empty rows
+      const dataRows = rows.slice(1).filter(row => row.length >= 3 && row[0]);
+
+      if (dataRows.length === 0) {
+        toast({
+          title: "No data found",
+          description: "CSV file appears to be empty or incorrectly formatted",
+          variant: "destructive",
+        });
+        setIsImporting(false);
+        return;
+      }
+
+      let successCount = 0;
+      let failedCount = 0;
+      const errors: string[] = [];
+
+      for (const row of dataRows) {
+        const [name, email, password] = row;
+
+        // Validate row data
+        if (!name || !email || !password) {
+          errors.push(`Row skipped: Missing required fields (${email || 'no email'})`);
+          failedCount++;
+          continue;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          errors.push(`${email}: Invalid email format`);
+          failedCount++;
+          continue;
+        }
+
+        // Validate password length
+        if (password.length < 6) {
+          errors.push(`${email}: Password must be at least 6 characters`);
+          failedCount++;
+          continue;
+        }
+
+        try {
+          // Create user
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: name }
+            }
+          });
+
+          if (authError) {
+            errors.push(`${email}: ${authError.message}`);
+            failedCount++;
+            continue;
+          }
+
+          if (authData.user) {
+            // Assign cleaner role
+            const { error: roleError } = await supabase
+              .from('user_roles')
+              .insert([{ user_id: authData.user.id, role: 'cleaner' }]);
+
+            if (roleError) {
+              errors.push(`${email}: Failed to assign role - ${roleError.message}`);
+              failedCount++;
+              continue;
+            }
+
+            successCount++;
+          }
+        } catch (err: any) {
+          errors.push(`${email}: ${err.message}`);
+          failedCount++;
+        }
+      }
+
+      setImportResults({ success: successCount, failed: failedCount, errors });
+      
+      if (successCount > 0) {
+        await fetchAllData();
+        toast({
+          title: "Import completed",
+          description: `Successfully created ${successCount} cleaner(s)`,
+        });
+      }
+
+      setBulkImportOpen(true);
+    } catch (error: any) {
+      toast({
+        title: "Import failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -1418,10 +1546,28 @@ const AdminDashboard = () => {
                     <CardTitle>User Management</CardTitle>
                     <CardDescription>Manage user roles and permissions</CardDescription>
                   </div>
-                  <Button onClick={() => setCreateCleanerOpen(true)}>
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Create Cleaner
-                  </Button>
+                  <div className="flex gap-2">
+                    <label htmlFor="bulk-import-csv">
+                      <Button variant="outline" disabled={isImporting} asChild>
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isImporting ? "Importing..." : "Import CSV"}
+                        </span>
+                      </Button>
+                      <input
+                        id="bulk-import-csv"
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleBulkImport}
+                        disabled={isImporting}
+                      />
+                    </label>
+                    <Button onClick={() => setCreateCleanerOpen(true)}>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Create Cleaner
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1531,6 +1677,76 @@ const AdminDashboard = () => {
                     <p className="text-base">{selectedReport.description}</p>
                   </div>
                 )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Import Results Dialog */}
+        <Dialog open={bulkImportOpen} onOpenChange={setBulkImportOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Import Results</DialogTitle>
+              <DialogDescription>
+                Summary of the bulk cleaner import process
+              </DialogDescription>
+            </DialogHeader>
+            {importResults && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{importResults.success}</p>
+                        <p className="text-sm text-muted-foreground">Successfully Created</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-red-600">{importResults.failed}</p>
+                        <p className="text-sm text-muted-foreground">Failed</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {importResults.errors.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Errors:</h4>
+                    <div className="max-h-[300px] overflow-y-auto space-y-1 bg-muted p-3 rounded-md">
+                      {importResults.errors.map((error, index) => (
+                        <p key={index} className="text-sm text-destructive">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-muted p-4 rounded-md">
+                  <h4 className="text-sm font-semibold mb-2">CSV Format:</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Your CSV file should have the following columns (with header row):
+                  </p>
+                  <code className="text-xs block bg-background p-2 rounded">
+                    Full Name,Email,Password<br />
+                    John Doe,john@example.com,password123<br />
+                    Jane Smith,jane@example.com,securepass456
+                  </code>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    • Passwords must be at least 6 characters<br />
+                    • Email addresses must be valid format<br />
+                    • All fields are required
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setBulkImportOpen(false)}>
+                    Close
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
