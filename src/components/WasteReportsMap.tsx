@@ -1,4 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +67,45 @@ const createColoredIcon = (color: string) => {
   });
 };
 
+const createClusterCustomIcon = (cluster: any) => {
+  const count = cluster.getChildCount();
+  const markers = cluster.getAllChildMarkers();
+  
+  // Determine cluster color based on the most severe status
+  const statuses = markers.map((m: any) => m.options.status);
+  const hasPending = statuses.includes('pending');
+  const hasInProgress = statuses.includes('in_progress');
+  const hasRejected = statuses.includes('rejected');
+  const hasResolved = statuses.includes('resolved');
+  
+  let clusterColor = '#6b7280'; // default gray
+  if (hasPending) clusterColor = '#ef4444'; // red for pending (highest priority)
+  else if (hasInProgress) clusterColor = '#eab308'; // yellow for in-progress
+  else if (hasRejected) clusterColor = '#3b82f6'; // blue for rejected
+  else if (hasResolved) clusterColor = '#22c55e'; // green for all resolved
+  
+  return L.divIcon({
+    html: `
+      <div style="
+        background-color: ${clusterColor};
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 4px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        font-weight: bold;
+        color: white;
+        font-size: 14px;
+      ">${count}</div>
+    `,
+    className: 'custom-cluster-icon',
+    iconSize: L.point(40, 40, true),
+  });
+};
+
 export const WasteReportsMap = ({ reports, onReportClick }: WasteReportsMapProps) => {
   const center: [number, number] = reports.length > 0 
     ? [reports[0].location_lat, reports[0].location_lng]
@@ -90,55 +130,66 @@ export const WasteReportsMap = ({ reports, onReportClick }: WasteReportsMapProps
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {reports.map((report) => {
-          const markerColor = getMarkerColor(report.status);
-          const customIcon = createColoredIcon(markerColor);
-          
-          return (
-            <Marker
-              key={report.id}
-              // @ts-ignore - react-leaflet types issue with custom icons
-              position={[report.location_lat, report.location_lng]}
-              // @ts-ignore
-              icon={customIcon}
-            >
-            <Popup>
-              <div className="p-2 min-w-[200px]">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold">Waste Report</h3>
-                  {getStatusBadge(report.status)}
+        <MarkerClusterGroup
+          chunkedLoading
+          iconCreateFunction={createClusterCustomIcon}
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          zoomToBoundsOnClick={true}
+        >
+          {reports.map((report) => {
+            const markerColor = getMarkerColor(report.status);
+            const customIcon = createColoredIcon(markerColor);
+            
+            return (
+              <Marker
+                key={report.id}
+                // @ts-ignore - react-leaflet types issue with custom icons
+                position={[report.location_lat, report.location_lng]}
+                // @ts-ignore
+                icon={customIcon}
+                // @ts-ignore - custom property for cluster coloring
+                status={report.status}
+              >
+              <Popup>
+                <div className="p-2 min-w-[200px]">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">Waste Report</h3>
+                    {getStatusBadge(report.status)}
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    {report.waste_type && (
+                      <p><strong>Type:</strong> {report.waste_type}</p>
+                    )}
+                    {report.severity && (
+                      <p><strong>Severity:</strong> {report.severity}</p>
+                    )}
+                    {report.location_address && (
+                      <p><strong>Location:</strong> {report.location_address}</p>
+                    )}
+                    {report.description && (
+                      <p className="line-clamp-2"><strong>Description:</strong> {report.description}</p>
+                    )}
+                    {report.created_at && (
+                      <p className="text-muted-foreground">
+                        {new Date(report.created_at).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={() => onReportClick?.(report)}
+                  >
+                    View Details
+                  </Button>
                 </div>
-                <div className="space-y-1 text-sm">
-                  {report.waste_type && (
-                    <p><strong>Type:</strong> {report.waste_type}</p>
-                  )}
-                  {report.severity && (
-                    <p><strong>Severity:</strong> {report.severity}</p>
-                  )}
-                  {report.location_address && (
-                    <p><strong>Location:</strong> {report.location_address}</p>
-                  )}
-                  {report.description && (
-                    <p className="line-clamp-2"><strong>Description:</strong> {report.description}</p>
-                  )}
-                  {report.created_at && (
-                    <p className="text-muted-foreground">
-                      {new Date(report.created_at).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-                <Button 
-                  size="sm" 
-                  className="w-full mt-2"
-                  onClick={() => onReportClick?.(report)}
-                >
-                  View Details
-                </Button>
-              </div>
-            </Popup>
-          </Marker>
-        );
-        })}
+              </Popup>
+            </Marker>
+          );
+          })}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );
