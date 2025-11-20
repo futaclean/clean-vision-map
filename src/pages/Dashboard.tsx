@@ -164,42 +164,58 @@ const Dashboard = () => {
 
       console.log('Fetching reports for user:', user.id, 'Page:', currentPage, 'Range:', from, to);
 
-      // Build the base query
-      let query = supabase
+      // First, get the count
+      let countQuery = supabase
         .from('waste_reports')
-        .select('*', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // Apply search filter if search term exists
+      // Apply search filter to count if needed
       if (searchTerm.trim()) {
-        console.log('Applying search filter:', searchTerm);
-        query = query.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+        countQuery = countQuery.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
-      // Execute query with pagination
-      const { data: reports, error, count } = await query
+      const { count, error: countError } = await countQuery;
+
+      if (countError) {
+        console.error('Error fetching count:', countError);
+        throw countError;
+      }
+
+      console.log('Total count:', count);
+      setTotalReports(count || 0);
+
+      // Then, get the actual data
+      let dataQuery = supabase
+        .from('waste_reports')
+        .select('*')
+        .eq('user_id', user.id);
+
+      // Apply search filter to data if needed
+      if (searchTerm.trim()) {
+        dataQuery = dataQuery.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      const { data: reports, error: dataError } = await dataQuery
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      console.log('Query result - Reports:', reports, 'Count:', count, 'Error:', error);
+      console.log('Query result - Reports:', reports, 'Error:', dataError);
 
-      if (error) {
-        console.error('Error fetching reports:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load reports",
-          variant: "destructive",
-        });
-        setRecentReports([]);
-        setTotalReports(0);
-        return;
+      if (dataError) {
+        console.error('Error fetching reports:', dataError);
+        throw dataError;
       }
 
       console.log('Setting reports state:', reports?.length || 0, 'reports');
-      setTotalReports(count || 0);
       setRecentReports(reports || []);
     } catch (error) {
       console.error('Exception fetching recent reports:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load reports. Please try again.",
+        variant: "destructive",
+      });
       setRecentReports([]);
       setTotalReports(0);
     } finally {
