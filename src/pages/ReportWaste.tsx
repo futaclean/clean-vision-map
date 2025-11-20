@@ -112,37 +112,57 @@ const ReportWaste = () => {
     setLoading(true);
 
     try {
-      // Upload image to storage (to be implemented)
-      // For now, using a placeholder URL
-      const imageUrl = imagePreview;
+      // Upload image to storage
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${user!.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('waste-reports')
+        .upload(fileName, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL for the uploaded image
+      const { data: { publicUrl } } = supabase.storage
+        .from('waste-reports')
+        .getPublicUrl(fileName);
 
       // Insert report into database
       const { error } = await supabase
-        .from('waste_reports')
+        .from("waste_reports")
         .insert({
           user_id: user!.id,
-          image_url: imageUrl,
+          image_url: publicUrl,
           location_lat: location.lat,
           location_lng: location.lng,
           location_address: locationAddress,
           waste_type: wasteType,
           description: description || null,
-          status: 'pending',
+          status: "pending",
         });
 
       if (error) throw error;
 
       toast({
-        title: "Report submitted!",
-        description: "Your waste report has been recorded successfully",
+        title: "Report submitted successfully",
+        description: "Thank you for helping keep FUTA clean!",
       });
 
-      navigate('/dashboard');
+      // Reset form
+      setImageFile(null);
+      setImagePreview("");
+      setWasteType("");
+      setDescription("");
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
     } catch (error: any) {
-      console.error('Error submitting report:', error);
+      console.error("Error submitting report:", error);
       toast({
-        title: "Submission failed",
-        description: error.message,
+        title: "Error submitting report",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
