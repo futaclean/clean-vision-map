@@ -78,6 +78,12 @@ const AdminDashboard = () => {
   const [savedFilters, setSavedFilters] = useState<any[]>([]);
   const [filterName, setFilterName] = useState<string>("");
   const [showSaveFilter, setShowSaveFilter] = useState(false);
+  
+  // Create cleaner dialog
+  const [createCleanerOpen, setCreateCleanerOpen] = useState(false);
+  const [newCleanerEmail, setNewCleanerEmail] = useState("");
+  const [newCleanerName, setNewCleanerName] = useState("");
+  const [newCleanerPassword, setNewCleanerPassword] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -155,7 +161,7 @@ const AdminDashboard = () => {
       
       if (data) {
         setIsAdmin(true);
-        await Promise.all([fetchReports(), fetchCleaners(), fetchUsers(), fetchUserRoles()]);
+        await fetchAllData();
       } else {
         toast({
           title: "Access Denied",
@@ -169,6 +175,36 @@ const AdminDashboard = () => {
       navigate('/dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Optimized: Fetch all data in parallel with fewer queries
+  const fetchAllData = async () => {
+    try {
+      const [reportsData, profilesData, rolesData] = await Promise.all([
+        supabase.from('waste_reports').select('*').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('user_id, role')
+      ]);
+
+      if (reportsData.error) throw reportsData.error;
+      if (profilesData.error) throw profilesData.error;
+      if (rolesData.error) throw rolesData.error;
+
+      setReports(reportsData.data || []);
+      setUsers(profilesData.data || []);
+      setUserRoles(rolesData.data || []);
+      
+      // Filter cleaners from the roles data
+      const cleanerIds = rolesData.data?.filter(r => r.role === 'cleaner').map(r => r.user_id) || [];
+      const cleanerProfiles = profilesData.data?.filter(p => cleanerIds.includes(p.id)) || [];
+      setCleaners(cleanerProfiles);
+    } catch (error: any) {
+      toast({
+        title: "Error loading data",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -187,40 +223,6 @@ const AdminDashboard = () => {
     } else {
       setReports(data || []);
     }
-  };
-
-  const fetchCleaners = async () => {
-    const { data: rolesData } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'cleaner');
-
-    if (rolesData && rolesData.length > 0) {
-      const cleanerIds = rolesData.map(r => r.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', cleanerIds);
-
-      setCleaners(profilesData || []);
-    }
-  };
-
-  const fetchUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    setUsers(data || []);
-  };
-
-  const fetchUserRoles = async () => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('user_id, role');
-
-    setUserRoles(data || []);
   };
 
   const handleAssignCleaner = async (reportId: string, cleanerId: string) => {
@@ -316,10 +318,62 @@ const AdminDashboard = () => {
         title: "Role updated",
         description: "User role changed successfully",
       });
-      await Promise.all([fetchUserRoles(), fetchCleaners()]);
+      await fetchAllData();
     } catch (error: any) {
       toast({
         title: "Error updating role",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateCleaner = async () => {
+    if (!newCleanerEmail || !newCleanerName || !newCleanerPassword) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Use Supabase admin to create user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newCleanerEmail,
+        password: newCleanerPassword,
+        options: {
+          data: {
+            full_name: newCleanerName
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Assign cleaner role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert([{ user_id: authData.user.id, role: 'cleaner' }]);
+
+        if (roleError) throw roleError;
+
+        toast({
+          title: "Cleaner created",
+          description: `${newCleanerName} has been added as a cleaner`,
+        });
+
+        setCreateCleanerOpen(false);
+        setNewCleanerEmail("");
+        setNewCleanerName("");
+        setNewCleanerPassword("");
+        await fetchAllData();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error creating cleaner",
         description: error.message,
         variant: "destructive",
       });
@@ -1359,8 +1413,16 @@ const AdminDashboard = () => {
           <TabsContent value="users" className="space-y-4">
             <Card className="shadow-card border-border">
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>Manage user roles and permissions</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>Manage user roles and permissions</CardDescription>
+                  </div>
+                  <Button onClick={() => setCreateCleanerOpen(true)}>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Create Cleaner
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -1492,6 +1554,63 @@ const AdminDashboard = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Create Cleaner Dialog */}
+        <Dialog open={createCleanerOpen} onOpenChange={setCreateCleanerOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Cleaner</DialogTitle>
+              <DialogDescription>
+                Add a new cleaner account to the system
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="cleaner-name" className="text-sm font-medium">
+                  Full Name
+                </label>
+                <Input
+                  id="cleaner-name"
+                  placeholder="Enter full name"
+                  value={newCleanerName}
+                  onChange={(e) => setNewCleanerName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="cleaner-email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="cleaner-email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={newCleanerEmail}
+                  onChange={(e) => setNewCleanerEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="cleaner-password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Input
+                  id="cleaner-password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={newCleanerPassword}
+                  onChange={(e) => setNewCleanerPassword(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setCreateCleanerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateCleaner}>
+                  Create Cleaner
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
