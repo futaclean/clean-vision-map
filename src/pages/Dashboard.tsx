@@ -150,52 +150,45 @@ const Dashboard = () => {
   };
 
   const fetchRecentReports = async () => {
+    if (!user) return;
+    
     try {
-      // Build query with search filter
-      let countQuery = supabase
-        .from('waste_reports')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id);
-
-      let dataQuery = supabase
-        .from('waste_reports')
-        .select('*')
-        .eq('user_id', user!.id);
-
-      // Apply search filter if search term exists
-      if (searchTerm.trim()) {
-        const searchFilter = `waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`;
-        countQuery = countQuery.or(searchFilter);
-        dataQuery = dataQuery.or(searchFilter);
-      }
-
-      // Get total count
-      const { count, error: countError } = await countQuery;
-      
-      if (countError) {
-        console.error('Error fetching count:', countError);
-        return;
-      }
-      
-      setTotalReports(count || 0);
-
-      // Get paginated reports
       const from = (currentPage - 1) * reportsPerPage;
       const to = from + reportsPerPage - 1;
 
-      const { data: reports, error: dataError } = await dataQuery
+      // Build the base query
+      let query = supabase
+        .from('waste_reports')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      // Apply search filter if search term exists
+      if (searchTerm.trim()) {
+        query = query.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      // Execute query with pagination
+      const { data: reports, error, count } = await query
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (dataError) {
-        console.error('Error fetching reports:', dataError);
+      if (error) {
+        console.error('Error fetching reports:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load reports",
+          variant: "destructive",
+        });
         return;
       }
 
+      console.log('Fetched reports:', reports, 'Count:', count);
+      setTotalReports(count || 0);
       setRecentReports(reports || []);
     } catch (error) {
       console.error('Error fetching recent reports:', error);
       setRecentReports([]);
+      setTotalReports(0);
     }
   };
 
