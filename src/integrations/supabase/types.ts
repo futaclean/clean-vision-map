@@ -100,6 +100,7 @@ export type Database = {
       }
       waste_reports: {
         Row: {
+          after_image_url: string | null
           ai_analysis: Json | null
           assigned_to: string | null
           created_at: string | null
@@ -116,6 +117,7 @@ export type Database = {
           waste_type: string | null
         }
         Insert: {
+          after_image_url?: string | null
           ai_analysis?: Json | null
           assigned_to?: string | null
           created_at?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           waste_type?: string | null
         }
         Update: {
+          after_image_url?: string | null
           ai_analysis?: Json | null
           assigned_to?: string | null
           created_at?: string | null
