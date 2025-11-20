@@ -37,6 +37,7 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const reportsPerPage = 5;
 
   useEffect(() => {
@@ -150,11 +151,18 @@ const Dashboard = () => {
   };
 
   const fetchRecentReports = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, skipping fetch');
+      return;
+    }
+    
+    setIsLoadingReports(true);
     
     try {
       const from = (currentPage - 1) * reportsPerPage;
       const to = from + reportsPerPage - 1;
+
+      console.log('Fetching reports for user:', user.id, 'Page:', currentPage, 'Range:', from, to);
 
       // Build the base query
       let query = supabase
@@ -164,6 +172,7 @@ const Dashboard = () => {
 
       // Apply search filter if search term exists
       if (searchTerm.trim()) {
+        console.log('Applying search filter:', searchTerm);
         query = query.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
@@ -172,6 +181,8 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .range(from, to);
 
+      console.log('Query result - Reports:', reports, 'Count:', count, 'Error:', error);
+
       if (error) {
         console.error('Error fetching reports:', error);
         toast({
@@ -179,16 +190,20 @@ const Dashboard = () => {
           description: "Failed to load reports",
           variant: "destructive",
         });
+        setRecentReports([]);
+        setTotalReports(0);
         return;
       }
 
-      console.log('Fetched reports:', reports, 'Count:', count);
+      console.log('Setting reports state:', reports?.length || 0, 'reports');
       setTotalReports(count || 0);
       setRecentReports(reports || []);
     } catch (error) {
-      console.error('Error fetching recent reports:', error);
+      console.error('Exception fetching recent reports:', error);
       setRecentReports([]);
       setTotalReports(0);
+    } finally {
+      setIsLoadingReports(false);
     }
   };
 
@@ -484,7 +499,12 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {recentReports.length === 0 ? (
+            {isLoadingReports ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading reports...</p>
+              </div>
+            ) : recentReports.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 {searchTerm ? (
