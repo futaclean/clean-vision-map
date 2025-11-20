@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -254,6 +255,18 @@ const AdminDashboard = () => {
       // Send notification if a cleaner was assigned (not unassigned)
       if (cleanerId !== 'unassigned') {
         try {
+          const report = reports.find(r => r.id === reportId);
+          
+          // Create in-app notification
+          await supabase.from('notifications').insert({
+            user_id: cleanerId,
+            title: 'New Report Assigned',
+            message: `You have been assigned to a waste report at ${report?.location_address || 'a location'}`,
+            type: 'info',
+            related_report_id: reportId
+          });
+
+          // Send email notification
           const { error: notificationError } = await supabase.functions.invoke(
             'send-cleaner-notification',
             {
@@ -263,16 +276,6 @@ const AdminDashboard = () => {
 
           if (notificationError) {
             console.error('Notification error:', notificationError);
-            toast({
-              title: "Notification failed",
-              description: "Report assigned but email notification failed",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Notification sent",
-              description: "Cleaner has been notified via email",
-            });
           }
         } catch (err) {
           console.error('Error sending notification:', err);
@@ -284,6 +287,8 @@ const AdminDashboard = () => {
   };
 
   const handleStatusChange = async (reportId: string, newStatus: string) => {
+    const report = reports.find(r => r.id === reportId);
+    
     const { error } = await supabase
       .from('waste_reports')
       .update({ status: newStatus })
@@ -300,6 +305,39 @@ const AdminDashboard = () => {
         title: "Status updated",
         description: "Report status changed successfully",
       });
+
+      // Send notification to report submitter
+      if (report && ['in_progress', 'resolved', 'rejected'].includes(newStatus)) {
+        const notificationMessages: Record<string, { title: string; message: string; type: 'info' | 'success' | 'warning' }> = {
+          in_progress: {
+            title: 'Report In Progress',
+            message: 'A cleaner has started working on your waste report',
+            type: 'info'
+          },
+          resolved: {
+            title: 'Report Resolved',
+            message: 'Your waste report has been successfully resolved!',
+            type: 'success'
+          },
+          rejected: {
+            title: 'Report Rejected',
+            message: 'Your waste report has been rejected',
+            type: 'warning'
+          }
+        };
+
+        const notification = notificationMessages[newStatus];
+        if (notification) {
+          await supabase.from('notifications').insert({
+            user_id: report.user_id,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            related_report_id: reportId
+          });
+        }
+      }
+
       fetchReports();
     }
   };
@@ -974,6 +1012,7 @@ const AdminDashboard = () => {
                 <span className="text-xl font-bold text-white">Admin Dashboard</span>
               </div>
             </div>
+            <NotificationBell />
           </div>
         </div>
       </header>

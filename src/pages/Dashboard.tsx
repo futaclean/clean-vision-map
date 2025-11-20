@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const Dashboard = () => {
   const { user, signOut, loading } = useAuth();
@@ -379,6 +380,7 @@ const Dashboard = () => {
             </nav>
             
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <Button variant="ghost" onClick={signOut} className="text-white hover:bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
