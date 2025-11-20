@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -60,6 +61,9 @@ const AdminDashboard = () => {
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<string>("");
+  const [bulkCleaner, setBulkCleaner] = useState<string>("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -340,6 +344,81 @@ const AdminDashboard = () => {
   const getUserRole = (userId: string) => {
     const userRole = userRoles.find(ur => ur.user_id === userId);
     return userRole?.role || 'user';
+  };
+
+  const handleSelectReport = (reportId: string) => {
+    setSelectedReportIds(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedReportIds.length === filteredReports.length) {
+      setSelectedReportIds([]);
+    } else {
+      setSelectedReportIds(filteredReports.map(r => r.id));
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkAction || selectedReportIds.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('waste_reports')
+        .update({ status: bulkAction })
+        .in('id', selectedReportIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bulk update successful",
+        description: `Updated ${selectedReportIds.length} reports to ${bulkAction}`,
+      });
+
+      setSelectedReportIds([]);
+      setBulkAction("");
+      fetchReports();
+    } catch (error: any) {
+      toast({
+        title: "Error updating reports",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkCleanerAssignment = async () => {
+    if (!bulkCleaner || selectedReportIds.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('waste_reports')
+        .update({ 
+          assigned_to: bulkCleaner === 'unassigned' ? null : bulkCleaner,
+          status: bulkCleaner === 'unassigned' ? 'pending' : 'in_progress'
+        })
+        .in('id', selectedReportIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bulk assignment successful",
+        description: `Assigned ${selectedReportIds.length} reports`,
+      });
+
+      setSelectedReportIds([]);
+      setBulkCleaner("");
+      fetchReports();
+    } catch (error: any) {
+      toast({
+        title: "Error assigning cleaner",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   // Analytics calculations
@@ -701,6 +780,69 @@ const AdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Bulk Actions Bar */}
+                {selectedReportIds.length > 0 && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <span className="text-sm font-medium">
+                        {selectedReportIds.length} report{selectedReportIds.length > 1 ? 's' : ''} selected
+                      </span>
+                      
+                      <div className="flex items-center gap-2">
+                        <Select value={bulkAction} onValueChange={setBulkAction}>
+                          <SelectTrigger className="w-[150px] bg-background">
+                            <SelectValue placeholder="Change status" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          onClick={handleBulkStatusUpdate}
+                          disabled={!bulkAction}
+                          size="sm"
+                        >
+                          Update Status
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Select value={bulkCleaner} onValueChange={setBulkCleaner}>
+                          <SelectTrigger className="w-[150px] bg-background">
+                            <SelectValue placeholder="Assign cleaner" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {cleaners.map((cleaner) => (
+                              <SelectItem key={cleaner.id} value={cleaner.id}>
+                                {cleaner.full_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          onClick={handleBulkCleanerAssignment}
+                          disabled={!bulkCleaner}
+                          size="sm"
+                        >
+                          Assign
+                        </Button>
+                      </div>
+
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedReportIds([])}
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Filters */}
                 <div className="flex gap-4 mb-6">
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -737,6 +879,12 @@ const AdminDashboard = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={selectedReportIds.length === filteredReports.length && filteredReports.length > 0}
+                            onCheckedChange={handleSelectAll}
+                          />
+                        </TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Submitted By</TableHead>
                         <TableHead>Type</TableHead>
@@ -749,13 +897,19 @@ const AdminDashboard = () => {
                     <TableBody>
                       {filteredReports.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                             No reports found
                           </TableCell>
                         </TableRow>
                       ) : (
                         filteredReports.map((report) => (
                           <TableRow key={report.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedReportIds.includes(report.id)}
+                                onCheckedChange={() => handleSelectReport(report.id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">
                               {new Date(report.created_at).toLocaleDateString()}
                             </TableCell>
