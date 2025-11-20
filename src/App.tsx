@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CleanerDashboard from "./pages/CleanerDashboard";
 import ReportWaste from "./pages/ReportWaste";
+import ReportTracking from "./pages/ReportTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/report" element={<ReportWaste />} />
+            <Route path="/report/:reportId" element={<ReportTracking />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/cleaner" element={<CleanerDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
