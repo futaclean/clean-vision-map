@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2 } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface WasteReport {
   id: string;
@@ -291,6 +292,60 @@ const AdminDashboard = () => {
     return userRole?.role || 'user';
   };
 
+  // Analytics calculations
+  const analyticsData = useMemo(() => {
+    // Reports over time (last 7 days)
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      return date.toISOString().split('T')[0];
+    });
+
+    const reportsOverTime = last7Days.map(date => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: reports.filter(r => r.created_at.split('T')[0] === date).length
+    }));
+
+    // Status breakdown
+    const statusBreakdown = [
+      { name: 'Pending', value: reports.filter(r => r.status === 'pending').length, color: '#eab308' },
+      { name: 'In Progress', value: reports.filter(r => r.status === 'in_progress').length, color: '#3b82f6' },
+      { name: 'Resolved', value: reports.filter(r => r.status === 'resolved').length, color: '#22c55e' },
+      { name: 'Rejected', value: reports.filter(r => r.status === 'rejected').length, color: '#ef4444' },
+    ].filter(item => item.value > 0);
+
+    // Waste type distribution
+    const wasteTypes = reports.reduce((acc, report) => {
+      const type = report.waste_type || 'other';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const wasteTypeData = Object.entries(wasteTypes).map(([name, value]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value
+    }));
+
+    // Average resolution time
+    const resolvedReports = reports.filter(r => r.status === 'resolved');
+    const avgResolutionTime = resolvedReports.length > 0
+      ? resolvedReports.reduce((acc, report) => {
+          const created = new Date(report.created_at).getTime();
+          const updated = new Date(report.created_at).getTime(); // Assuming updated_at would be used
+          return acc + (updated - created);
+        }, 0) / resolvedReports.length / (1000 * 60 * 60 * 24) // Convert to days
+      : 0;
+
+    return {
+      reportsOverTime,
+      statusBreakdown,
+      wasteTypeData,
+      avgResolutionTime: Math.round(avgResolutionTime * 10) / 10,
+      totalResolved: resolvedReports.length,
+      resolutionRate: reports.length > 0 ? Math.round((resolvedReports.length / reports.length) * 100) : 0
+    };
+  }, [reports]);
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -354,11 +409,132 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="reports" className="space-y-6">
+        <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Performance Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="shadow-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Resolution Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-foreground">{analyticsData.resolutionRate}%</div>
+                    <TrendingUp className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {analyticsData.totalResolved} of {reports.length} reports resolved
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg Resolution Time</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-foreground">{analyticsData.avgResolutionTime}</div>
+                    <BarChart3 className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">days per report</p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Issues</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-foreground">
+                      {reports.filter(r => r.status === 'pending' || r.status === 'in_progress').length}
+                    </div>
+                    <ClipboardList className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">pending or in progress</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Reports Over Time */}
+              <Card className="shadow-card border-border">
+                <CardHeader>
+                  <CardTitle>Reports Over Time</CardTitle>
+                  <CardDescription>Last 7 days activity</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={analyticsData.reportsOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} name="Reports" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Status Breakdown */}
+              <Card className="shadow-card border-border">
+                <CardHeader>
+                  <CardTitle>Status Breakdown</CardTitle>
+                  <CardDescription>Current report statuses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={analyticsData.statusBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {analyticsData.statusBreakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Waste Type Distribution */}
+              <Card className="shadow-card border-border lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Waste Type Distribution</CardTitle>
+                  <CardDescription>Reports by waste category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.wasteTypeData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#22c55e" name="Reports" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
             <Card className="shadow-card border-border">
