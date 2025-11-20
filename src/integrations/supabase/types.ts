@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      waste_reports: {
+        Row: {
+          ai_analysis: Json | null
+          assigned_to: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          location_address: string | null
+          location_lat: number
+          location_lng: number
+          severity: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          waste_type: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          location_address?: string | null
+          location_lat: number
+          location_lng: number
+          severity?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          waste_type?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          location_address?: string | null
+          location_lat?: number
+          location_lng?: number
+          severity?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          waste_type?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
