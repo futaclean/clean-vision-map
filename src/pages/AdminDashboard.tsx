@@ -73,6 +73,45 @@ const AdminDashboard = () => {
     }
   }, [user]);
 
+  // Real-time subscription for waste reports
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const channel = supabase
+      .channel('waste-reports-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'waste_reports'
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New Report",
+              description: "A new waste report has been submitted",
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "Report Updated",
+              description: "A waste report has been updated",
+            });
+          }
+          
+          // Refresh all data
+          fetchReports();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+
   const checkAdminStatus = async () => {
     try {
       const { data, error } = await supabase
