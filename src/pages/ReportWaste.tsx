@@ -1,0 +1,340 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera, MapPin, Upload, ArrowLeft, Loader2, Leaf } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+const ReportWaste = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationAddress, setLocationAddress] = useState("");
+  const [wasteType, setWasteType] = useState("");
+  const [description, setDescription] = useState("");
+  const [gettingLocation, setGettingLocation] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    // Auto-capture GPS on component mount
+    captureLocation();
+  }, []);
+
+  const captureLocation = () => {
+    setGettingLocation(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ lat: latitude, lng: longitude });
+          setLocationAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          setGettingLocation(false);
+          toast({
+            title: "Location captured",
+            description: "Your GPS location has been recorded",
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setGettingLocation(false);
+          toast({
+            title: "Location error",
+            description: "Could not get your location. Please enable GPS.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      setGettingLocation(false);
+      toast({
+        title: "GPS not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!imageFile) {
+      toast({
+        title: "Image required",
+        description: "Please upload an image of the waste",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!location) {
+      toast({
+        title: "Location required",
+        description: "Please enable GPS to capture your location",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!wasteType) {
+      toast({
+        title: "Waste type required",
+        description: "Please select a waste category",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Upload image to storage (to be implemented)
+      // For now, using a placeholder URL
+      const imageUrl = imagePreview;
+
+      // Insert report into database
+      const { error } = await supabase
+        .from('waste_reports')
+        .insert({
+          user_id: user!.id,
+          image_url: imageUrl,
+          location_lat: location.lat,
+          location_lng: location.lng,
+          location_address: locationAddress,
+          waste_type: wasteType,
+          description: description || null,
+          status: 'pending',
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Report submitted!",
+        description: "Your waste report has been recorded successfully",
+      });
+
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Error submitting report:', error);
+      toast({
+        title: "Submission failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" asChild className="text-white hover:bg-white/10">
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Link>
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <div className="bg-white rounded-full p-2">
+                <Leaf className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xl font-bold text-white hidden sm:inline">CleanFUTA</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            Report Waste
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Help keep our campus clean by reporting waste issues
+          </p>
+        </div>
+
+        <Card className="shadow-card border-border">
+          <CardHeader>
+            <CardTitle>Waste Report Form</CardTitle>
+            <CardDescription>
+              Fill in the details below to submit your waste report
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="image">Waste Image *</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                  {imagePreview ? (
+                    <div className="space-y-4">
+                      <img
+                        src={imagePreview}
+                        alt="Waste preview"
+                        className="max-h-64 mx-auto rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview("");
+                        }}
+                      >
+                        Change Image
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <label htmlFor="image" className="cursor-pointer">
+                        <span className="text-primary font-medium">Click to upload</span>
+                        <span className="text-muted-foreground"> or drag and drop</span>
+                      </label>
+                      <input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label>GPS Location *</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-muted rounded-md px-4 py-2 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      {location
+                        ? locationAddress
+                        : "Location not captured"}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={captureLocation}
+                    disabled={gettingLocation}
+                  >
+                    {gettingLocation ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Getting...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Refresh
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Waste Type */}
+              <div className="space-y-2">
+                <Label htmlFor="waste-type">Waste Category *</Label>
+                <Select value={wasteType} onValueChange={setWasteType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select waste type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="plastic">Plastic</SelectItem>
+                    <SelectItem value="paper">Paper</SelectItem>
+                    <SelectItem value="food">Food Waste</SelectItem>
+                    <SelectItem value="hazardous">Hazardous</SelectItem>
+                    <SelectItem value="mixed">Mixed Waste</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Add any additional details about the waste..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-primary hover:opacity-90 text-lg py-6"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Submitting Report...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 mr-2" />
+                    Submit Report
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+};
+
+export default ReportWaste;
