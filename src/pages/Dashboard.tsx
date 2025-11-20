@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const reportsPerPage = 5;
 
   useEffect(() => {
@@ -55,7 +56,14 @@ const Dashboard = () => {
     if (user) {
       fetchRecentReports();
     }
-  }, [user, currentPage]);
+  }, [user, currentPage, searchTerm]);
+
+  useEffect(() => {
+    // Reset to page 1 when search term changes
+    if (searchTerm) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm]);
 
   const checkUserRole = async () => {
     try {
@@ -96,22 +104,33 @@ const Dashboard = () => {
 
   const fetchRecentReports = async () => {
     try {
-      // Get total count
-      const { count } = await supabase
+      // Build query with search filter
+      let countQuery = supabase
         .from('waste_reports')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id);
 
+      let dataQuery = supabase
+        .from('waste_reports')
+        .select('*')
+        .eq('user_id', user!.id);
+
+      // Apply search filter if search term exists
+      if (searchTerm.trim()) {
+        const searchFilter = `waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`;
+        countQuery = countQuery.or(searchFilter);
+        dataQuery = dataQuery.or(searchFilter);
+      }
+
+      // Get total count
+      const { count } = await countQuery;
       setTotalReports(count || 0);
 
       // Get paginated reports
       const from = (currentPage - 1) * reportsPerPage;
       const to = from + reportsPerPage - 1;
 
-      const { data: reports } = await supabase
-        .from('waste_reports')
-        .select('*')
-        .eq('user_id', user!.id)
+      const { data: reports } = await dataQuery
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -401,16 +420,40 @@ const Dashboard = () => {
                 </CardDescription>
               </div>
             </div>
+
+            {/* Search Bar */}
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by waste type, location, or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {recentReports.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg mb-2">No reports yet</p>
-                <p className="text-sm mb-4">Start by reporting waste in your area</p>
-                <Button asChild className="bg-gradient-primary hover:opacity-90">
-                  <Link to="/report">Create First Report</Link>
-                </Button>
+                {searchTerm ? (
+                  <>
+                    <p className="text-lg mb-2">No reports found</p>
+                    <p className="text-sm mb-4">Try adjusting your search terms</p>
+                    <Button variant="outline" onClick={() => setSearchTerm('')}>
+                      Clear Search
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg mb-2">No reports yet</p>
+                    <p className="text-sm mb-4">Start by reporting waste in your area</p>
+                    <Button asChild className="bg-gradient-primary hover:opacity-90">
+                      <Link to="/report">Create First Report</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
