@@ -33,18 +33,53 @@ const ReportWaste = () => {
     captureLocation();
   }, []);
 
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'CleanFUTA-Waste-Management-App'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Geocoding failed');
+      }
+      
+      const data = await response.json();
+      
+      // Format a readable address from the response
+      const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      return address;
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      // Fallback to coordinates if geocoding fails
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+  };
+
   const captureLocation = () => {
     setGettingLocation(true);
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ lat: latitude, lng: longitude });
+          
+          // Show coordinates immediately as a placeholder
           setLocationAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          
+          // Fetch the readable address in the background
+          const address = await reverseGeocode(latitude, longitude);
+          setLocationAddress(address);
+          
           setGettingLocation(false);
           toast({
             title: "Location captured",
-            description: "Your GPS location has been recorded",
+            description: "Your GPS location and address have been recorded",
           });
         },
         (error) => {
