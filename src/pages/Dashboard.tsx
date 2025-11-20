@@ -123,22 +123,32 @@ const Dashboard = () => {
       }
 
       // Get total count
-      const { count } = await countQuery;
+      const { count, error: countError } = await countQuery;
+      
+      if (countError) {
+        console.error('Error fetching count:', countError);
+        return;
+      }
+      
       setTotalReports(count || 0);
 
       // Get paginated reports
       const from = (currentPage - 1) * reportsPerPage;
       const to = from + reportsPerPage - 1;
 
-      const { data: reports } = await dataQuery
+      const { data: reports, error: dataError } = await dataQuery
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (reports) {
-        setRecentReports(reports);
+      if (dataError) {
+        console.error('Error fetching reports:', dataError);
+        return;
       }
+
+      setRecentReports(reports || []);
     } catch (error) {
       console.error('Error fetching recent reports:', error);
+      setRecentReports([]);
     }
   };
 
