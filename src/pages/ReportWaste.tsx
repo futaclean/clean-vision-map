@@ -70,6 +70,28 @@ const ReportWaste = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a JPEG, PNG, or WebP image",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Image must be under 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -109,12 +131,56 @@ const ReportWaste = () => {
       return;
     }
 
+    // Validate description length (1000 character limit)
+    if (description && description.length > 1000) {
+      toast({
+        title: "Description too long",
+        description: "Description must be under 1000 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate GPS coordinates (reasonable ranges for Nigeria/FUTA area)
+    // FUTA is approximately at 7.3°N, 5.1°E
+    // Allow reasonable bounds for Nigeria: Lat 4-14°N, Lng 2.5-15°E
+    if (location.lat < 4 || location.lat > 14 || location.lng < 2.5 || location.lng > 15) {
+      toast({
+        title: "Invalid location",
+        description: "GPS coordinates appear to be outside the valid range",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Re-validate file before upload (defense in depth)
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(imageFile.type.toLowerCase())) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, or WebP image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (imageFile.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Image must be under 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Upload image to storage
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${user!.id}/${Date.now()}.${fileExt}`;
+      // Upload image to storage with sanitized extension
+      const fileExt = imageFile.type.split('/')[1]; // Get extension from MIME type
+      const sanitizedExt = fileExt === 'jpeg' ? 'jpg' : fileExt;
+      const fileName = `${user!.id}/${Date.now()}.${sanitizedExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('waste-reports')
@@ -127,7 +193,7 @@ const ReportWaste = () => {
         .from('waste-reports')
         .getPublicUrl(fileName);
 
-      // Insert report into database
+      // Insert report into database with trimmed description
       const { error } = await supabase
         .from("waste_reports")
         .insert({
@@ -137,7 +203,7 @@ const ReportWaste = () => {
           location_lng: location.lng,
           location_address: locationAddress,
           waste_type: wasteType,
-          description: description || null,
+          description: description ? description.trim() : null,
           status: "pending",
         });
 
@@ -327,8 +393,12 @@ const ReportWaste = () => {
                   placeholder="Add any additional details about the waste..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  maxLength={1000}
                   rows={4}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {description.length}/1000 characters
+                </p>
               </div>
 
               {/* Submit Button */}
