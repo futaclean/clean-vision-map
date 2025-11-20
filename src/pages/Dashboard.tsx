@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2 } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -15,7 +18,30 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    if (user) {
+      checkUserRole();
+    }
+  }, [user]);
+
+  const checkUserRole = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user!.id)
+        .eq('role', 'admin')
+        .single();
+
+      setIsAdmin(!!data);
+    } catch (error) {
+      setIsAdmin(false);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  if (loading || isChecking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -55,9 +81,12 @@ const Dashboard = () => {
               <Link to="/report" className="text-white/80 hover:text-white font-medium">
                 Report Waste
               </Link>
-              <Link to="/admin" className="text-white/80 hover:text-white font-medium">
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-white/80 hover:text-white font-medium flex items-center gap-1">
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
             </nav>
             
             <div className="flex items-center gap-2">
@@ -102,6 +131,28 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
+
+        {/* Admin Quick Access */}
+        {isAdmin && (
+          <Card className="shadow-card border-border mb-8 bg-gradient-to-r from-primary/10 to-primary/5">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="bg-primary rounded-xl p-3">
+                  <Shield className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <CardTitle>Admin Access</CardTitle>
+                  <CardDescription>Manage reports, users, and cleaners</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="bg-gradient-primary hover:opacity-90">
+                <Link to="/admin">Open Admin Dashboard</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
