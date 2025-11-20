@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface WasteReport {
   id: string;
@@ -19,6 +21,8 @@ interface WasteReport {
   waste_type: string;
   severity: string;
   location_address: string;
+  location_lat: number;
+  location_lng: number;
   user_id: string;
   assigned_to: string | null;
   image_url: string;
@@ -47,6 +51,10 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [selectedReport, setSelectedReport] = useState<WasteReport | null>(null);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -240,6 +248,44 @@ const AdminDashboard = () => {
     return <Badge className={colors[severity] || "bg-gray-500"}>{severity}</Badge>;
   };
 
+  const getUserName = (userId: string) => {
+    const userProfile = users.find(u => u.id === userId);
+    return userProfile?.full_name || 'Unknown User';
+  };
+
+  const handleViewReport = (report: WasteReport) => {
+    setSelectedReport(report);
+    setReportDialogOpen(true);
+  };
+
+  const handleDeleteReport = async () => {
+    if (!reportToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('waste_reports')
+        .delete()
+        .eq('id', reportToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Report deleted",
+        description: "The waste report has been deleted successfully",
+      });
+      
+      setDeleteDialogOpen(false);
+      setReportToDelete(null);
+      fetchReports();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting report",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getUserRole = (userId: string) => {
     const userRole = userRoles.find(ur => ur.user_id === userId);
     return userRole?.role || 'user';
@@ -366,10 +412,10 @@ const AdminDashboard = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Submitted By</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Severity</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Location</TableHead>
                         <TableHead>Assigned To</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -387,12 +433,10 @@ const AdminDashboard = () => {
                             <TableCell className="font-medium">
                               {new Date(report.created_at).toLocaleDateString()}
                             </TableCell>
+                            <TableCell>{getUserName(report.user_id)}</TableCell>
                             <TableCell className="capitalize">{report.waste_type}</TableCell>
                             <TableCell>{getSeverityBadge(report.severity)}</TableCell>
                             <TableCell>{getStatusBadge(report.status)}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">
-                              {report.location_address || 'N/A'}
-                            </TableCell>
                             <TableCell>
                               <Select
                                 value={report.assigned_to || 'unassigned'}
@@ -412,20 +456,39 @@ const AdminDashboard = () => {
                               </Select>
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={report.status}
-                                onValueChange={(value) => handleStatusChange(report.id, value)}
-                              >
-                                <SelectTrigger className="w-[130px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="in_progress">In Progress</SelectItem>
-                                  <SelectItem value="resolved">Resolved</SelectItem>
-                                  <SelectItem value="rejected">Rejected</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewReport(report)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Select
+                                  value={report.status}
+                                  onValueChange={(value) => handleStatusChange(report.id, value)}
+                                >
+                                  <SelectTrigger className="w-[120px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in_progress">In Progress</SelectItem>
+                                    <SelectItem value="resolved">Resolved</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setReportToDelete(report.id);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
@@ -486,6 +549,93 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Report Details Dialog */}
+        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Waste Report Details</DialogTitle>
+              <DialogDescription>
+                Detailed information about this waste report
+              </DialogDescription>
+            </DialogHeader>
+            {selectedReport && (
+              <div className="space-y-4">
+                <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
+                  <img
+                    src={selectedReport.image_url}
+                    alt="Waste report"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Submitted By</p>
+                    <p className="text-base font-semibold">{getUserName(selectedReport.user_id)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Date</p>
+                    <p className="text-base font-semibold">
+                      {new Date(selectedReport.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Waste Type</p>
+                    <p className="text-base font-semibold capitalize">{selectedReport.waste_type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Severity</p>
+                    <div className="mt-1">{getSeverityBadge(selectedReport.severity)}</div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <div className="mt-1">{getStatusBadge(selectedReport.status)}</div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Assigned To</p>
+                    <p className="text-base font-semibold">
+                      {selectedReport.assigned_to 
+                        ? cleaners.find(c => c.id === selectedReport.assigned_to)?.full_name || 'Unknown'
+                        : 'Unassigned'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Location</p>
+                  <p className="text-base">{selectedReport.location_address || 'No address provided'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Coordinates: {selectedReport.location_lat}, {selectedReport.location_lng}
+                  </p>
+                </div>
+                {selectedReport.description && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Description</p>
+                    <p className="text-base">{selectedReport.description}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the waste report
+                and remove it from the system.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteReport} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
