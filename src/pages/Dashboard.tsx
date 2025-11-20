@@ -2,7 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -11,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [stats, setStats] = useState({
@@ -22,6 +28,9 @@ const Dashboard = () => {
   const [recentReports, setRecentReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedReport, setEditedReport] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -93,7 +102,56 @@ const Dashboard = () => {
 
   const handleReportClick = (report: any) => {
     setSelectedReport(report);
+    setEditedReport(report);
+    setIsEditing(false);
     setIsDialogOpen(true);
+  };
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setEditedReport(selectedReport);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveReport = async () => {
+    if (!editedReport) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('waste_reports')
+        .update({
+          status: editedReport.status,
+          waste_type: editedReport.waste_type,
+          severity: editedReport.severity,
+          description: editedReport.description,
+        })
+        .eq('id', editedReport.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Report updated successfully",
+      });
+
+      setSelectedReport(editedReport);
+      setIsEditing(false);
+      
+      // Refresh the reports list
+      await fetchRecentReports();
+      await fetchReportStats();
+    } catch (error) {
+      console.error('Error updating report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -338,7 +396,28 @@ const Dashboard = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Report Details</DialogTitle>
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleEditToggle} disabled={isSaving}>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveReport} disabled={isSaving}>
+                      <Save className="h-4 w-4 mr-1" />
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleEditToggle}>
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+            </div>
           </DialogHeader>
           {selectedReport && (
             <div className="space-y-4">
@@ -354,31 +433,96 @@ const Dashboard = () => {
               )}
 
               {/* Status and Waste Type */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <Badge className={getStatusBadge(selectedReport.status).className}>
-                  {selectedReport.status === 'in_progress' ? 'In Progress' : selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
-                </Badge>
-                {selectedReport.waste_type && (
-                  <Badge variant="outline">{selectedReport.waste_type}</Badge>
-                )}
-                {selectedReport.severity && (
-                  <Badge variant="outline" className={
-                    selectedReport.severity === 'high' ? 'border-red-500 text-red-700 dark:text-red-400' :
-                    selectedReport.severity === 'medium' ? 'border-orange-500 text-orange-700 dark:text-orange-400' :
-                    'border-green-500 text-green-700 dark:text-green-400'
-                  }>
-                    {selectedReport.severity.charAt(0).toUpperCase() + selectedReport.severity.slice(1)} Severity
-                  </Badge>
-                )}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Status */}
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Status</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedReport.status} 
+                        onValueChange={(value) => setEditedReport({...editedReport, status: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge className={getStatusBadge(selectedReport.status).className}>
+                        {selectedReport.status === 'in_progress' ? 'In Progress' : selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Waste Type */}
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Waste Type</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedReport.waste_type || ''}
+                        onChange={(e) => setEditedReport({...editedReport, waste_type: e.target.value})}
+                        placeholder="e.g., Plastic, Organic"
+                      />
+                    ) : (
+                      selectedReport.waste_type && (
+                        <Badge variant="outline">{selectedReport.waste_type}</Badge>
+                      )
+                    )}
+                  </div>
+
+                  {/* Severity */}
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Severity</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedReport.severity || 'medium'} 
+                        onValueChange={(value) => setEditedReport({...editedReport, severity: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      selectedReport.severity && (
+                        <Badge variant="outline" className={
+                          selectedReport.severity === 'high' ? 'border-red-500 text-red-700 dark:text-red-400' :
+                          selectedReport.severity === 'medium' ? 'border-orange-500 text-orange-700 dark:text-orange-400' :
+                          'border-green-500 text-green-700 dark:text-green-400'
+                        }>
+                          {selectedReport.severity.charAt(0).toUpperCase() + selectedReport.severity.slice(1)} Severity
+                        </Badge>
+                      )
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Description */}
-              {selectedReport.description && (
-                <div>
-                  <h4 className="font-semibold text-foreground mb-2">Description</h4>
-                  <p className="text-muted-foreground">{selectedReport.description}</p>
-                </div>
-              )}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Description</Label>
+                {isEditing ? (
+                  <Textarea
+                    value={editedReport.description || ''}
+                    onChange={(e) => setEditedReport({...editedReport, description: e.target.value})}
+                    placeholder="Enter report description"
+                    rows={4}
+                  />
+                ) : (
+                  selectedReport.description && (
+                    <p className="text-muted-foreground">{selectedReport.description}</p>
+                  )
+                )}
+              </div>
 
               {/* Location */}
               <div>
