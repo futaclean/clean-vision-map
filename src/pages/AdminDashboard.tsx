@@ -218,6 +218,35 @@ const AdminDashboard = () => {
         title: "Cleaner assigned",
         description: "Report updated successfully",
       });
+
+      // Send notification if a cleaner was assigned (not unassigned)
+      if (cleanerId !== 'unassigned') {
+        try {
+          const { error: notificationError } = await supabase.functions.invoke(
+            'send-cleaner-notification',
+            {
+              body: { reportId, cleanerId }
+            }
+          );
+
+          if (notificationError) {
+            console.error('Notification error:', notificationError);
+            toast({
+              title: "Notification failed",
+              description: "Report assigned but email notification failed",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Notification sent",
+              description: "Cleaner has been notified via email",
+            });
+          }
+        } catch (err) {
+          console.error('Error sending notification:', err);
+        }
+      }
+
       fetchReports();
     }
   };
@@ -409,6 +438,31 @@ const AdminDashboard = () => {
         title: "Bulk assignment successful",
         description: `Assigned ${selectedReportIds.length} reports`,
       });
+
+      // Send notifications for bulk assignment
+      if (bulkCleaner !== 'unassigned') {
+        try {
+          const notificationPromises = selectedReportIds.map(reportId =>
+            supabase.functions.invoke('send-cleaner-notification', {
+              body: { reportId, cleanerId: bulkCleaner }
+            })
+          );
+
+          await Promise.all(notificationPromises);
+
+          toast({
+            title: "Notifications sent",
+            description: `Sent ${selectedReportIds.length} email notifications`,
+          });
+        } catch (notificationError) {
+          console.error('Bulk notification error:', notificationError);
+          toast({
+            title: "Some notifications failed",
+            description: "Reports assigned but some emails may not have been sent",
+            variant: "destructive",
+          });
+        }
+      }
 
       setSelectedReportIds([]);
       setBulkCleaner("");
