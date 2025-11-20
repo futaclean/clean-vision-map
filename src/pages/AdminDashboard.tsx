@@ -508,6 +508,48 @@ const AdminDashboard = () => {
     }
   };
 
+  const exportCleanersToCSV = () => {
+    try {
+      // Create CSV content with headers
+      const headers = ['Full Name', 'Email', 'Password'];
+      const rows = cleaners.map(cleaner => [
+        cleaner.full_name,
+        cleaner.email,
+        '' // Empty password field for security
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `cleaners-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export successful",
+        description: `Exported ${cleaners.length} cleaner(s) to CSV`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredReports = reports.filter(report => {
     if (filterStatus !== "all" && report.status !== filterStatus) return false;
     if (filterType !== "all" && report.waste_type !== filterType) return false;
@@ -1547,6 +1589,14 @@ const AdminDashboard = () => {
                     <CardDescription>Manage user roles and permissions</CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={exportCleanersToCSV}
+                      disabled={cleaners.length === 0}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
                     <label htmlFor="bulk-import-csv">
                       <Button variant="outline" disabled={isImporting} asChild>
                         <span>
