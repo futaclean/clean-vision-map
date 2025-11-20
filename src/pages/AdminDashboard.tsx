@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import * as XLSX from 'xlsx';
 import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -421,6 +422,77 @@ const AdminDashboard = () => {
     }
   };
 
+  const exportToCSV = () => {
+    const dataToExport = filteredReports.map(report => ({
+      'Date': new Date(report.created_at).toLocaleDateString(),
+      'Submitted By': getUserName(report.user_id),
+      'Type': report.waste_type,
+      'Severity': report.severity,
+      'Status': report.status,
+      'Location': report.location_address,
+      'Description': report.description || '',
+      'Latitude': report.location_lat,
+      'Longitude': report.location_lng,
+    }));
+
+    const csv = [
+      Object.keys(dataToExport[0]).join(','),
+      ...dataToExport.map(row => 
+        Object.values(row).map(val => 
+          typeof val === 'string' && val.includes(',') ? `"${val}"` : val
+        ).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waste-reports-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export successful",
+      description: `Exported ${dataToExport.length} reports to CSV`,
+    });
+  };
+
+  const exportToExcel = () => {
+    const dataToExport = filteredReports.map(report => ({
+      'Date': new Date(report.created_at).toLocaleDateString(),
+      'Submitted By': getUserName(report.user_id),
+      'Type': report.waste_type,
+      'Severity': report.severity,
+      'Status': report.status,
+      'Location': report.location_address,
+      'Description': report.description || '',
+      'Latitude': report.location_lat,
+      'Longitude': report.location_lng,
+      'Assigned To': report.assigned_to ? cleaners.find(c => c.id === report.assigned_to)?.full_name || 'Unknown' : 'Unassigned',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Waste Reports');
+
+    // Auto-size columns
+    const maxWidth = dataToExport.reduce((w, r) => {
+      return Object.keys(r).map((key, i) => {
+        const cellValue = String(r[key as keyof typeof r] || '');
+        return Math.max(w[i] || 10, cellValue.length, key.length);
+      });
+    }, [] as number[]);
+    worksheet['!cols'] = maxWidth.map(width => ({ width: width + 2 }));
+
+    XLSX.writeFile(workbook, `waste-reports-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    toast({
+      title: "Export successful",
+      description: `Exported ${dataToExport.length} reports to Excel`,
+    });
+  };
+
   // Analytics calculations
   const analyticsData = useMemo(() => {
     // Reports over time (last 7 days)
@@ -773,10 +845,20 @@ const AdminDashboard = () => {
                     <CardTitle>Waste Reports Management</CardTitle>
                     <CardDescription>View and manage all waste reports</CardDescription>
                   </div>
-                  <Button onClick={fetchReports} variant="outline" size="sm">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={exportToCSV} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                    <Button onClick={exportToExcel} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Excel
+                    </Button>
+                    <Button onClick={fetchReports} variant="outline" size="sm">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Refresh
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
