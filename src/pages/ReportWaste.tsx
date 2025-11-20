@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import LocationMap from "@/components/LocationMap";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -439,6 +440,15 @@ const ReportWaste = () => {
                     )}
                   </Button>
                 </div>
+                {location && (
+                  <div className="mt-4">
+                    <LocationMap 
+                      lat={location.lat} 
+                      lng={location.lng} 
+                      address={locationAddress}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Waste Type */}
