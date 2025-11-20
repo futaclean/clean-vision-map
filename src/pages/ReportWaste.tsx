@@ -57,7 +57,22 @@ const ReportWaste = () => {
       console.log('Geocoding data received:', data);
       
       // Format a readable address from the response
-      const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      // Extract meaningful location parts: road, building, suburb, etc.
+      const addr = data.address || {};
+      const parts = [];
+      
+      // Add specific location markers in order of importance
+      if (addr.building) parts.push(addr.building);
+      if (addr.road) parts.push(addr.road);
+      if (addr.suburb || addr.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
+      if (addr.university) parts.push(addr.university);
+      if (addr.city || addr.town) parts.push(addr.city || addr.town);
+      
+      // If we have specific parts, use them; otherwise fall back to display_name
+      const address = parts.length > 0 
+        ? parts.join(', ')
+        : data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      
       console.log('Final address:', address);
       return address;
     } catch (error) {
