@@ -1,9 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const Dashboard = () => {
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   const stats = [
     { label: "Reports Submitted", value: "0", icon: FileText, color: "text-blue-600" },
     { label: "Pending Review", value: "0", icon: Clock, color: "text-yellow-600" },
@@ -37,7 +61,7 @@ const Dashboard = () => {
             </nav>
             
             <div className="flex items-center gap-2">
-              <Button variant="ghost" className="text-white hover:bg-white/10">
+              <Button variant="ghost" onClick={signOut} className="text-white hover:bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
@@ -53,7 +77,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            Welcome back, User!
+            Welcome back, {user.user_metadata?.full_name || 'User'}!
           </h1>
           <p className="text-muted-foreground text-lg">
             Track your waste reports and environmental impact
@@ -154,8 +178,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// Add these missing imports at the top
-import { Clock, CheckCircle2 } from "lucide-react";
 
 export default Dashboard;
