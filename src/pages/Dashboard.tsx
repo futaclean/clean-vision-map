@@ -55,8 +55,8 @@ const Dashboard = () => {
               <Link to="/report" className="text-white/80 hover:text-white font-medium">
                 Report Waste
               </Link>
-              <Link to="/map" className="text-white/80 hover:text-white font-medium">
-                Map View
+              <Link to="/admin" className="text-white/80 hover:text-white font-medium">
+                Admin
               </Link>
             </nav>
             
