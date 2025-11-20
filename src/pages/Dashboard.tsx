@@ -11,6 +11,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    resolved: 0,
+    inProgress: 0
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,6 +27,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       checkUserRole();
+      fetchReportStats();
     }
   }, [user]);
 
@@ -41,6 +48,26 @@ const Dashboard = () => {
     }
   };
 
+  const fetchReportStats = async () => {
+    try {
+      const { data: reports } = await supabase
+        .from('waste_reports')
+        .select('status')
+        .eq('user_id', user!.id);
+
+      if (reports) {
+        const total = reports.length;
+        const pending = reports.filter(r => r.status === 'pending').length;
+        const resolved = reports.filter(r => r.status === 'resolved').length;
+        const inProgress = reports.filter(r => r.status === 'in_progress').length;
+
+        setStats({ total, pending, resolved, inProgress });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
   if (loading || isChecking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -54,11 +81,11 @@ const Dashboard = () => {
 
   if (!user) return null;
 
-  const stats = [
-    { label: "Reports Submitted", value: "0", icon: FileText, color: "text-blue-600" },
-    { label: "Pending Review", value: "0", icon: Clock, color: "text-yellow-600" },
-    { label: "Resolved Issues", value: "0", icon: CheckCircle2, color: "text-green-600" },
-    { label: "Total Impact", value: "0kg", icon: Leaf, color: "text-primary" },
+  const statsCards = [
+    { label: "Reports Submitted", value: stats.total.toString(), icon: FileText, color: "text-blue-600" },
+    { label: "Pending Review", value: stats.pending.toString(), icon: Clock, color: "text-yellow-600" },
+    { label: "Resolved Issues", value: stats.resolved.toString(), icon: CheckCircle2, color: "text-green-600" },
+    { label: "In Progress", value: stats.inProgress.toString(), icon: BarChart3, color: "text-primary" },
   ];
 
   return (
@@ -115,7 +142,7 @@ const Dashboard = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {statsCards.map((stat, index) => (
             <Card key={index} className="shadow-card hover:shadow-glow transition-all duration-300 border-border">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
