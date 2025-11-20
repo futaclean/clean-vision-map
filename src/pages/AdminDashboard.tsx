@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map } from "lucide-react";
+import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -412,6 +413,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="map">Map View</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
@@ -534,6 +536,24 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="map" className="space-y-6">
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="h-5 w-5" />
+                  Waste Reports Map
+                </CardTitle>
+                <CardDescription>View all waste report locations on an interactive map</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WasteReportsMap 
+                  reports={filteredReports} 
+                  onReportClick={handleViewReport}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
