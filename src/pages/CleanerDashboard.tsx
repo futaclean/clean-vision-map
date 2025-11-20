@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RouteOptimizer } from "@/components/RouteOptimizer";
 import { NotificationBell } from "@/components/NotificationBell";
+import { Label } from "@/components/ui/label";
 
 interface WasteReport {
   id: string;
@@ -29,6 +30,7 @@ interface WasteReport {
   image_url: string;
   description: string | null;
   updated_at: string | null;
+  after_image_url: string | null;
 }
 
 const CleanerDashboard = () => {
@@ -40,6 +42,9 @@ const CleanerDashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<WasteReport | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [afterImage, setAfterImage] = useState<File | null>(null);
+  const [afterImagePreview, setAfterImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -155,6 +160,94 @@ const CleanerDashboard = () => {
         description: "Report status changed successfully",
       });
       fetchReports();
+    }
+  };
+
+  const handleAfterImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAfterImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAfterImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCompleteWithPhoto = async () => {
+    if (!selectedReport || !afterImage) return;
+
+    setUploadingImage(true);
+
+    try {
+      // Upload image to Supabase Storage
+      const fileExt = afterImage.name.split('.').pop();
+      const fileName = `${selectedReport.id}-after-${Date.now()}.${fileExt}`;
+      const filePath = `waste-reports/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('waste-reports')
+        .upload(filePath, afterImage);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('waste-reports')
+        .getPublicUrl(filePath);
+
+      // Update report with after image and status
+      const { error: updateError } = await supabase
+        .from('waste_reports')
+        .update({
+          status: 'resolved',
+          after_image_url: publicUrl
+        })
+        .eq('id', selectedReport.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Work completed!",
+        description: "Report marked as resolved with completion photo",
+      });
+
+      setReportDialogOpen(false);
+      setAfterImage(null);
+      setAfterImagePreview(null);
+      fetchReports();
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload completion photo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -609,33 +702,114 @@ const CleanerDashboard = () => {
 
               {selectedReport.image_url && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Image</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Before Image</p>
                   <img 
                     src={selectedReport.image_url} 
-                    alt="Waste report" 
+                    alt="Waste report before" 
                     className="w-full rounded-lg"
                   />
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
-                <Select
-                  value={selectedReport.status}
-                  onValueChange={(value) => {
-                    handleStatusChange(selectedReport.id, value);
-                    setReportDialogOpen(false);
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background">
-                    <SelectItem value="pending">Mark as Pending</SelectItem>
-                    <SelectItem value="in_progress">Mark as In Progress</SelectItem>
-                    <SelectItem value="resolved">Mark as Resolved</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* After Photo Upload Section */}
+              {selectedReport.status !== 'resolved' && (
+                <div className="border-t pt-4">
+                  <Label className="text-sm font-medium mb-2 block">
+                    Upload Completion Photo (After)
+                  </Label>
+                  
+                  {afterImagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={afterImagePreview} 
+                        alt="After photo preview" 
+                        className="w-full rounded-lg mb-3"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setAfterImage(null);
+                          setAfterImagePreview(null);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer">
+                      <input
+                        type="file"
+                        id="after-photo"
+                        accept="image/*"
+                        onChange={handleAfterImageChange}
+                        className="hidden"
+                      />
+                      <label htmlFor="after-photo" className="cursor-pointer">
+                        <Camera className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                        <p className="text-sm font-medium mb-1">Upload completion photo</p>
+                        <p className="text-xs text-muted-foreground">
+                          Click to select or drag and drop
+                        </p>
+                      </label>
+                    </div>
+                  )}
+
+                  {afterImage && (
+                    <Button
+                      className="w-full mt-3"
+                      onClick={handleCompleteWithPhoto}
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? (
+                        <>
+                          <Upload className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Complete Work with Photo
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Show After Image if already completed */}
+              {selectedReport.after_image_url && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">After Image (Completed)</p>
+                  <img 
+                    src={selectedReport.after_image_url} 
+                    alt="Waste report after" 
+                    className="w-full rounded-lg"
+                  />
+                </div>
+              )}
+
+              {!afterImage && selectedReport.status !== 'resolved' && (
+                <div className="flex gap-2 pt-4">
+                  <Select
+                    value={selectedReport.status}
+                    onValueChange={(value) => {
+                      handleStatusChange(selectedReport.id, value);
+                      setReportDialogOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      <SelectItem value="pending">Mark as Pending</SelectItem>
+                      <SelectItem value="in_progress">Mark as In Progress</SelectItem>
+                      <SelectItem value="resolved">Mark as Resolved (No Photo)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

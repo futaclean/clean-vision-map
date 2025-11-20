@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Leaf, MapPin, Calendar, User, CheckCircle2, Clock, AlertCircle, XCircle, Truck } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { BeforeAfterImage } from "@/components/BeforeAfterImage";
 
 interface WasteReport {
   id: string;
@@ -24,6 +25,7 @@ interface WasteReport {
   assigned_to: string | null;
   image_url: string;
   description: string | null;
+  after_image_url: string | null;
 }
 
 interface CleanerProfile {
@@ -379,6 +381,19 @@ const ReportTracking = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Before/After Comparison */}
+        {report.after_image_url && (
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold mb-4">Work Documentation</h3>
+            <BeforeAfterImage
+              beforeImage={report.image_url}
+              afterImage={report.after_image_url}
+              beforeLabel="Before Cleaning"
+              afterLabel="After Cleaning"
+            />
+          </div>
+        )}
 
         {/* Status Timeline */}
         <Card>
