@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2 } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -34,6 +34,9 @@ const Dashboard = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalReports, setTotalReports] = useState(0);
+  const reportsPerPage = 5;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -45,9 +48,14 @@ const Dashboard = () => {
     if (user) {
       checkUserRole();
       fetchReportStats();
-      fetchRecentReports();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentReports();
+    }
+  }, [user, currentPage]);
 
   const checkUserRole = async () => {
     try {
@@ -88,12 +96,24 @@ const Dashboard = () => {
 
   const fetchRecentReports = async () => {
     try {
+      // Get total count
+      const { count } = await supabase
+        .from('waste_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user!.id);
+
+      setTotalReports(count || 0);
+
+      // Get paginated reports
+      const from = (currentPage - 1) * reportsPerPage;
+      const to = from + reportsPerPage - 1;
+
       const { data: reports } = await supabase
         .from('waste_reports')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .range(from, to);
 
       if (reports) {
         setRecentReports(reports);
@@ -143,6 +163,7 @@ const Dashboard = () => {
       setIsEditing(false);
       
       // Refresh the reports list
+      setCurrentPage(1);
       await fetchRecentReports();
       await fetchReportStats();
     } catch (error) {
@@ -177,7 +198,8 @@ const Dashboard = () => {
       setShowDeleteDialog(false);
       setIsDialogOpen(false);
       
-      // Refresh the reports list
+      // Refresh the reports list and reset to page 1
+      setCurrentPage(1);
       await fetchRecentReports();
       await fetchReportStats();
     } catch (error) {
@@ -371,8 +393,14 @@ const Dashboard = () => {
         {/* Recent Reports */}
         <Card className="shadow-card border-border">
           <CardHeader>
-            <CardTitle>Recent Reports</CardTitle>
-            <CardDescription>Your latest waste reports</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Reports</CardTitle>
+                <CardDescription>
+                  {totalReports > 0 ? `Showing ${recentReports.length} of ${totalReports} reports` : 'Your latest waste reports'}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {recentReports.length === 0 ? (
@@ -424,6 +452,37 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalReports > reportsPerPage && (
+              <div className="flex items-center justify-between pt-4 mt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {Math.ceil(totalReports / reportsPerPage)}
+                  </span>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalReports / reportsPerPage), prev + 1))}
+                  disabled={currentPage >= Math.ceil(totalReports / reportsPerPage)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
               </div>
             )}
           </CardContent>
