@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +20,8 @@ const Dashboard = () => {
     inProgress: 0
   });
   const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -74,7 +78,7 @@ const Dashboard = () => {
     try {
       const { data: reports } = await supabase
         .from('waste_reports')
-        .select('id, status, created_at, waste_type, location_address, severity')
+        .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -85,6 +89,20 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching recent reports:', error);
     }
+  };
+
+  const handleReportClick = (report: any) => {
+    setSelectedReport(report);
+    setIsDialogOpen(true);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      resolved: { variant: "default" as const, className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+      in_progress: { variant: "default" as const, className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+      pending: { variant: "default" as const, className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" }
+    };
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
   if (loading || isChecking) {
@@ -275,7 +293,8 @@ const Dashboard = () => {
                 {recentReports.map((report) => (
                   <div
                     key={report.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                    onClick={() => handleReportClick(report)}
+                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -314,6 +333,114 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Report Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Details</DialogTitle>
+          </DialogHeader>
+          {selectedReport && (
+            <div className="space-y-4">
+              {/* Report Image */}
+              {selectedReport.image_url && (
+                <div className="rounded-lg overflow-hidden border border-border">
+                  <img 
+                    src={selectedReport.image_url} 
+                    alt="Waste report" 
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Status and Waste Type */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge className={getStatusBadge(selectedReport.status).className}>
+                  {selectedReport.status === 'in_progress' ? 'In Progress' : selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
+                </Badge>
+                {selectedReport.waste_type && (
+                  <Badge variant="outline">{selectedReport.waste_type}</Badge>
+                )}
+                {selectedReport.severity && (
+                  <Badge variant="outline" className={
+                    selectedReport.severity === 'high' ? 'border-red-500 text-red-700 dark:text-red-400' :
+                    selectedReport.severity === 'medium' ? 'border-orange-500 text-orange-700 dark:text-orange-400' :
+                    'border-green-500 text-green-700 dark:text-green-400'
+                  }>
+                    {selectedReport.severity.charAt(0).toUpperCase() + selectedReport.severity.slice(1)} Severity
+                  </Badge>
+                )}
+              </div>
+
+              {/* Description */}
+              {selectedReport.description && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Description</h4>
+                  <p className="text-muted-foreground">{selectedReport.description}</p>
+                </div>
+              )}
+
+              {/* Location */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-2">Location</h4>
+                <p className="text-muted-foreground">
+                  {selectedReport.location_address || 'Address not specified'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Coordinates: {selectedReport.location_lat}, {selectedReport.location_lng}
+                </p>
+              </div>
+
+              {/* AI Analysis */}
+              {selectedReport.ai_analysis && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">AI Analysis</h4>
+                  <div className="bg-accent/50 rounded-lg p-3">
+                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {JSON.stringify(selectedReport.ai_analysis, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                <div>
+                  <h4 className="font-semibold text-foreground text-sm mb-1">Submitted</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(selectedReport.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                {selectedReport.updated_at && selectedReport.updated_at !== selectedReport.created_at && (
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm mb-1">Last Updated</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(selectedReport.updated_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Report ID */}
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground">Report ID: {selectedReport.id}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
