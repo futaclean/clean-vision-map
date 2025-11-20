@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import * as XLSX from 'xlsx';
+import { cn } from "@/lib/utils";
 import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -65,6 +70,14 @@ const AdminDashboard = () => {
   const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkCleaner, setBulkCleaner] = useState<string>("");
+  
+  // Advanced filters
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [locationSearch, setLocationSearch] = useState<string>("");
+  const [savedFilters, setSavedFilters] = useState<any[]>([]);
+  const [filterName, setFilterName] = useState<string>("");
+  const [showSaveFilter, setShowSaveFilter] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -77,6 +90,18 @@ const AdminDashboard = () => {
       checkAdminStatus();
     }
   }, [user]);
+
+  // Load saved filters from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('waste-report-filters');
+    if (saved) {
+      try {
+        setSavedFilters(JSON.parse(saved));
+      } catch (e) {
+        console.error('Error loading saved filters:', e);
+      }
+    }
+  }, []);
 
   // Real-time subscription for waste reports
   useEffect(() => {
@@ -304,6 +329,26 @@ const AdminDashboard = () => {
   const filteredReports = reports.filter(report => {
     if (filterStatus !== "all" && report.status !== filterStatus) return false;
     if (filterType !== "all" && report.waste_type !== filterType) return false;
+    
+    // Date range filter
+    if (dateFrom) {
+      const reportDate = new Date(report.created_at);
+      if (reportDate < dateFrom) return false;
+    }
+    if (dateTo) {
+      const reportDate = new Date(report.created_at);
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      if (reportDate > endOfDay) return false;
+    }
+    
+    // Location search
+    if (locationSearch && report.location_address) {
+      if (!report.location_address.toLowerCase().includes(locationSearch.toLowerCase())) {
+        return false;
+      }
+    }
+    
     return true;
   });
 
@@ -545,6 +590,71 @@ const AdminDashboard = () => {
       title: "Export successful",
       description: `Exported ${dataToExport.length} reports to Excel`,
     });
+  };
+
+  const saveCurrentFilter = () => {
+    if (!filterName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter a name for this filter preset",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newFilter = {
+      id: Date.now().toString(),
+      name: filterName,
+      filterStatus,
+      filterType,
+      dateFrom: dateFrom?.toISOString(),
+      dateTo: dateTo?.toISOString(),
+      locationSearch,
+    };
+
+    const updated = [...savedFilters, newFilter];
+    setSavedFilters(updated);
+    localStorage.setItem('waste-report-filters', JSON.stringify(updated));
+    
+    toast({
+      title: "Filter saved",
+      description: `Filter preset "${filterName}" has been saved`,
+    });
+
+    setFilterName("");
+    setShowSaveFilter(false);
+  };
+
+  const loadFilter = (filter: any) => {
+    setFilterStatus(filter.filterStatus);
+    setFilterType(filter.filterType);
+    setDateFrom(filter.dateFrom ? new Date(filter.dateFrom) : undefined);
+    setDateTo(filter.dateTo ? new Date(filter.dateTo) : undefined);
+    setLocationSearch(filter.locationSearch || "");
+
+    toast({
+      title: "Filter loaded",
+      description: `Applied "${filter.name}" filter preset`,
+    });
+  };
+
+  const deleteFilter = (filterId: string) => {
+    const updated = savedFilters.filter(f => f.id !== filterId);
+    setSavedFilters(updated);
+    localStorage.setItem('waste-report-filters', JSON.stringify(updated));
+
+    toast({
+      title: "Filter deleted",
+      description: "Filter preset has been removed",
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilterStatus("all");
+    setFilterType("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setLocationSearch("");
   };
 
   // Analytics calculations
@@ -980,34 +1090,164 @@ const AdminDashboard = () => {
                 )}
 
                 {/* Filters */}
-                <div className="flex gap-4 mb-6">
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4 mb-6">
+                  {/* Basic Filters Row */}
+                  <div className="flex flex-wrap gap-4">
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="plastic">Plastic</SelectItem>
-                      <SelectItem value="paper">Paper</SelectItem>
-                      <SelectItem value="food">Food Waste</SelectItem>
-                      <SelectItem value="hazardous">Hazardous</SelectItem>
-                      <SelectItem value="mixed">Mixed</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select value={filterType} onValueChange={setFilterType}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="plastic">Plastic</SelectItem>
+                        <SelectItem value="paper">Paper</SelectItem>
+                        <SelectItem value="food">Food Waste</SelectItem>
+                        <SelectItem value="hazardous">Hazardous</SelectItem>
+                        <SelectItem value="mixed">Mixed</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Advanced Filters Row */}
+                  <div className="flex flex-wrap gap-4 items-center">
+                    {/* Date From */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !dateFrom && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateFrom ? format(dateFrom, "PPP") : "Date from"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-background" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateFrom}
+                          onSelect={setDateFrom}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Date To */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !dateTo && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateTo ? format(dateTo, "PPP") : "Date to"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-background" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateTo}
+                          onSelect={setDateTo}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Location Search */}
+                    <div className="relative w-[240px]">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by location..."
+                        value={locationSearch}
+                        onChange={(e) => setLocationSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+
+                    {/* Clear All Filters */}
+                    {(filterStatus !== "all" || filterType !== "all" || dateFrom || dateTo || locationSearch) && (
+                      <Button variant="outline" onClick={clearAllFilters}>
+                        <X className="h-4 w-4 mr-2" />
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Saved Filters Row */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-sm font-medium">Filter Presets:</span>
+                    
+                    {savedFilters.map((filter) => (
+                      <div key={filter.id} className="flex items-center gap-1">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => loadFilter(filter)}
+                        >
+                          {filter.name}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteFilter(filter.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    {showSaveFilter ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Filter name..."
+                          value={filterName}
+                          onChange={(e) => setFilterName(e.target.value)}
+                          className="w-[150px]"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveCurrentFilter();
+                            if (e.key === 'Escape') setShowSaveFilter(false);
+                          }}
+                        />
+                        <Button size="sm" onClick={saveCurrentFilter}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowSaveFilter(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSaveFilter(true)}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Current Filter
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Reports Table */}
