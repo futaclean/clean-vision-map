@@ -65,6 +65,53 @@ const Dashboard = () => {
     }
   }, [searchTerm]);
 
+  // Real-time subscription for waste reports
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('waste-reports-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'waste_reports',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          
+          // Refresh reports and stats when data changes
+          fetchRecentReports();
+          fetchReportStats();
+          
+          // Show toast notification for new reports
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New report submitted",
+              description: "Your waste report has been added successfully",
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "Report updated",
+              description: "Report status has been updated",
+            });
+          } else if (payload.eventType === 'DELETE') {
+            toast({
+              title: "Report deleted",
+              description: "Report has been removed",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const checkUserRole = async () => {
     try {
       const { data } = await supabase
