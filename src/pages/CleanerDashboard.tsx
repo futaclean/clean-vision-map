@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CleanerRouteView } from "@/components/CleanerRouteView";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
 import { Switch } from "@/components/ui/switch";
+import { AIAnalysisDialog } from "@/components/AIAnalysisDialog";
 
 interface WasteReport {
   id: string;
@@ -57,6 +58,9 @@ const CleanerDashboard = () => {
   const { isTracking, error: trackingError } = useLocationTracking(trackingEnabled);
   const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'busy' | 'off_duty'>('available');
   const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false);
+  const [aiAnalysisDialog, setAiAnalysisDialog] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -298,6 +302,8 @@ const CleanerDashboard = () => {
 
       if (uploadError) throw uploadError;
 
+      // Get public URL for after image
+
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('waste-reports')
@@ -321,13 +327,49 @@ const CleanerDashboard = () => {
 
       toast({
         title: "Work completed!",
-        description: "Report marked as resolved with completion photo",
+        description: "Report marked as resolved. Analyzing cleanup with AI...",
       });
 
       setReportDialogOpen(false);
       setAfterImage(null);
       setAfterImagePreview(null);
       fetchReports();
+
+      // Trigger AI analysis in background
+      setIsAnalyzing(true);
+      setAiAnalysisDialog(true);
+      
+      try {
+        const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
+          'analyze-cleanup',
+          {
+            body: {
+              beforeImageUrl: selectedReport.image_url,
+              afterImageUrl: publicUrl,
+              reportId: selectedReport.id
+            }
+          }
+        );
+
+        if (analysisError) {
+          console.error('AI analysis error:', analysisError);
+          toast({
+            title: "AI Analysis Failed",
+            description: "Couldn't analyze the cleanup images, but report was marked as complete.",
+            variant: "destructive"
+          });
+        } else {
+          setAiAnalysis(analysisData.analysis);
+          toast({
+            title: "AI Analysis Complete",
+            description: "Check out the detailed cleanup analysis!",
+          });
+        }
+      } catch (analysisError) {
+        console.error('AI analysis error:', analysisError);
+      } finally {
+        setIsAnalyzing(false);
+      }
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       toast({
@@ -1018,6 +1060,14 @@ const CleanerDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* AI Analysis Dialog */}
+      <AIAnalysisDialog
+        open={aiAnalysisDialog}
+        onOpenChange={setAiAnalysisDialog}
+        analysis={aiAnalysis}
+        isAnalyzing={isAnalyzing}
+      />
     </div>
   );
 };

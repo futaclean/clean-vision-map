@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Leaf, MapPin, Calendar, User, CheckCircle2, Clock, AlertCircle, XCircle, Truck } from "lucide-react";
+import { ArrowLeft, Leaf, MapPin, Calendar, User, CheckCircle2, Clock, AlertCircle, XCircle, Truck, Sparkles } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { BeforeAfterImage } from "@/components/BeforeAfterImage";
+import { AIAnalysisDialog } from "@/components/AIAnalysisDialog";
 
 interface WasteReport {
   id: string;
@@ -26,6 +27,7 @@ interface WasteReport {
   image_url: string;
   description: string | null;
   after_image_url: string | null;
+  ai_analysis: any;
 }
 
 interface CleanerProfile {
@@ -50,6 +52,7 @@ const ReportTracking = () => {
   const [report, setReport] = useState<WasteReport | null>(null);
   const [cleaner, setCleaner] = useState<CleanerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiAnalysisDialog, setAiAnalysisDialog] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -385,13 +388,48 @@ const ReportTracking = () => {
         {/* Before/After Comparison */}
         {report.after_image_url && (
           <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4">Work Documentation</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Work Documentation</h3>
+              {report.ai_analysis && (
+                <Button
+                  variant="outline"
+                  onClick={() => setAiAnalysisDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  View AI Analysis
+                </Button>
+              )}
+            </div>
             <BeforeAfterImage
               beforeImage={report.image_url}
               afterImage={report.after_image_url}
               beforeLabel="Before Cleaning"
               afterLabel="After Cleaning"
             />
+            {report.ai_analysis && (
+              <Card className="mt-4">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <h4 className="font-semibold">AI Cleanliness Score</h4>
+                    </div>
+                    <Badge variant="default" className="text-lg px-4 py-1">
+                      {report.ai_analysis.score}/100
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{report.ai_analysis.summary}</p>
+                  <Button
+                    variant="link"
+                    onClick={() => setAiAnalysisDialog(true)}
+                    className="p-0 h-auto"
+                  >
+                    View detailed analysis →
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
@@ -454,6 +492,14 @@ const ReportTracking = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* AI Analysis Dialog */}
+      <AIAnalysisDialog
+        open={aiAnalysisDialog}
+        onOpenChange={setAiAnalysisDialog}
+        analysis={report?.ai_analysis}
+        isAnalyzing={false}
+      />
     </div>
   );
 };
