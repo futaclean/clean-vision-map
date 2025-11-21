@@ -1459,7 +1459,15 @@ const AdminDashboard = () => {
                 <span className="text-xl font-bold text-white">Admin Dashboard</span>
               </div>
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-3">
+              <Button asChild variant="secondary" size="sm">
+                <Link to="/performance" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Performance
+                </Link>
+              </Button>
+              <NotificationBell />
+            </div>
           </div>
         </div>
       </header>
