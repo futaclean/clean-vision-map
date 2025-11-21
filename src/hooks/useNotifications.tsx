@@ -99,10 +99,47 @@ export const useNotifications = () => {
     return { error: null };
   };
 
+  const notifyReportReassigned = async (
+    oldCleanerId: string,
+    newCleanerId: string,
+    reportId: string,
+    location: string,
+    newCleanerName: string
+  ) => {
+    const notifications = [
+      {
+        user_id: oldCleanerId,
+        title: 'Report Reassigned',
+        message: `The report at ${location} has been reassigned to ${newCleanerName}`,
+        type: 'warning' as const,
+        related_report_id: reportId
+      },
+      {
+        user_id: newCleanerId,
+        title: 'New Report Reassigned to You',
+        message: `You have been reassigned to a waste report at ${location}`,
+        type: 'info' as const,
+        related_report_id: reportId
+      }
+    ];
+
+    const { error } = await supabase
+      .from('notifications')
+      .insert(notifications);
+
+    if (error) {
+      console.error('Error creating reassignment notifications:', error);
+      return { error };
+    }
+
+    return { error: null };
+  };
+
   return {
     createNotification,
     notifyReportAssigned,
     notifyReportStatusChanged,
-    notifyNewReport
+    notifyNewReport,
+    notifyReportReassigned
   };
 };

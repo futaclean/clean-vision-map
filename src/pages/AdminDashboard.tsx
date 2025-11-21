@@ -232,6 +232,11 @@ const AdminDashboard = () => {
   };
 
   const handleAssignCleaner = async (reportId: string, cleanerId: string) => {
+    // Find the current report to get the previous assignment
+    const report = reports.find(r => r.id === reportId);
+    const previousCleanerId = report?.assigned_to;
+    const isReassignment = previousCleanerId && cleanerId !== 'unassigned' && previousCleanerId !== cleanerId;
+    
     const { error } = await supabase
       .from('waste_reports')
       .update({ 
@@ -248,20 +253,32 @@ const AdminDashboard = () => {
       });
     } else {
       toast({
-        title: "Cleaner assigned",
-        description: "Report updated successfully",
+        title: isReassignment ? "Report Reassigned" : "Cleaner assigned",
+        description: isReassignment 
+          ? "Report has been reassigned to a new cleaner" 
+          : "Report updated successfully",
       });
 
-      // Send notification if a cleaner was assigned (not unassigned)
-      if (cleanerId !== 'unassigned') {
-        try {
-          const report = reports.find(r => r.id === reportId);
-          
+      try {
+        // Notify previous cleaner if this is a reassignment
+        if (isReassignment && previousCleanerId) {
+          const newCleaner = cleaners.find(c => c.id === cleanerId);
+          await supabase.from('notifications').insert({
+            user_id: previousCleanerId,
+            title: 'Report Reassigned',
+            message: `The report at ${report?.location_address || 'a location'} has been reassigned to ${newCleaner?.full_name || 'another cleaner'}`,
+            type: 'warning',
+            related_report_id: reportId
+          });
+        }
+
+        // Send notification to new cleaner if assigned (not unassigned)
+        if (cleanerId !== 'unassigned') {
           // Create in-app notification
           await supabase.from('notifications').insert({
             user_id: cleanerId,
-            title: 'New Report Assigned',
-            message: `You have been assigned to a waste report at ${report?.location_address || 'a location'}`,
+            title: isReassignment ? 'New Report Reassigned to You' : 'New Report Assigned',
+            message: `You have been ${isReassignment ? 'reassigned' : 'assigned'} to a waste report at ${report?.location_address || 'a location'}`,
             type: 'info',
             related_report_id: reportId
           });
@@ -277,9 +294,9 @@ const AdminDashboard = () => {
           if (notificationError) {
             console.error('Notification error:', notificationError);
           }
-        } catch (err) {
-          console.error('Error sending notification:', err);
         }
+      } catch (err) {
+        console.error('Error sending notification:', err);
       }
 
       fetchReports();
