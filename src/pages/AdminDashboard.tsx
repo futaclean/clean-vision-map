@@ -1058,6 +1058,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="map">Map View</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
+            <TabsTrigger value="cleaners">Cleaners</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
 
@@ -1631,6 +1632,236 @@ const AdminDashboard = () => {
                     </TableBody>
                   </Table>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cleaners" className="space-y-6">
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserCheck className="h-5 w-5" />
+                      Cleaner Performance
+                    </CardTitle>
+                    <CardDescription>Monitor cleaner activity and performance metrics</CardDescription>
+                  </div>
+                  <Button onClick={() => setCreateCleanerOpen(true)}>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Create Cleaner
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {cleaners.length === 0 ? (
+                  <div className="text-center py-12">
+                    <UserCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Cleaners Yet</h3>
+                    <p className="text-muted-foreground mb-4">Create your first cleaner to get started</p>
+                    <Button onClick={() => setCreateCleanerOpen(true)}>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Create Cleaner
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Cleaner Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Card className="bg-gradient-card">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Total Cleaners</p>
+                              <p className="text-3xl font-bold text-foreground">{cleaners.length}</p>
+                            </div>
+                            <UserCheck className="h-8 w-8 text-primary" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gradient-card">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Active Assignments</p>
+                              <p className="text-3xl font-bold text-foreground">
+                                {reports.filter(r => r.assigned_to && r.status !== 'resolved').length}
+                              </p>
+                            </div>
+                            <ClipboardList className="h-8 w-8 text-blue-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gradient-card">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Resolved Today</p>
+                              <p className="text-3xl font-bold text-foreground">
+                                {reports.filter(r => 
+                                  r.status === 'resolved' && 
+                                  new Date(r.created_at).toDateString() === new Date().toDateString()
+                                ).length}
+                              </p>
+                            </div>
+                            <CheckSquare className="h-8 w-8 text-green-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gradient-card">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Avg Completion Rate</p>
+                              <p className="text-3xl font-bold text-foreground">
+                                {cleaners.length > 0 
+                                  ? Math.round(
+                                      cleaners.reduce((acc, cleaner) => {
+                                        const assignedReports = reports.filter(r => r.assigned_to === cleaner.id);
+                                        const completedReports = assignedReports.filter(r => r.status === 'resolved');
+                                        return acc + (assignedReports.length > 0 ? (completedReports.length / assignedReports.length) * 100 : 0);
+                                      }, 0) / cleaners.length
+                                    )
+                                  : 0
+                                }%
+                              </p>
+                            </div>
+                            <TrendingUp className="h-8 w-8 text-purple-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Individual Cleaner Performance Table */}
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Cleaner Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead className="text-center">Assigned</TableHead>
+                            <TableHead className="text-center">In Progress</TableHead>
+                            <TableHead className="text-center">Completed</TableHead>
+                            <TableHead className="text-center">Completion Rate</TableHead>
+                            <TableHead className="text-center">Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cleaners.map((cleaner) => {
+                            const assignedReports = reports.filter(r => r.assigned_to === cleaner.id);
+                            const inProgressReports = assignedReports.filter(r => r.status === 'in_progress');
+                            const completedReports = assignedReports.filter(r => r.status === 'resolved');
+                            const completionRate = assignedReports.length > 0 
+                              ? Math.round((completedReports.length / assignedReports.length) * 100)
+                              : 0;
+
+                            return (
+                              <TableRow key={cleaner.id}>
+                                <TableCell className="font-medium">{cleaner.full_name}</TableCell>
+                                <TableCell className="text-muted-foreground">{cleaner.email}</TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline">{assignedReports.length}</Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                                    {inProgressReports.length}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                                    {completedReports.length}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <div className="w-16 bg-muted rounded-full h-2">
+                                      <div 
+                                        className="bg-primary h-2 rounded-full transition-all"
+                                        style={{ width: `${completionRate}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-sm font-semibold">{completionRate}%</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {inProgressReports.length > 0 ? (
+                                    <Badge className="bg-blue-500">Active</Badge>
+                                  ) : assignedReports.length > 0 ? (
+                                    <Badge variant="secondary">Assigned</Badge>
+                                  ) : (
+                                    <Badge variant="outline">Available</Badge>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Detailed Performance Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Top Performers */}
+                      <Card className="shadow-card border-border">
+                        <CardHeader>
+                          <CardTitle>Top Performers</CardTitle>
+                          <CardDescription>Cleaners with highest completion rates</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {cleaners
+                              .map(cleaner => {
+                                const assignedReports = reports.filter(r => r.assigned_to === cleaner.id);
+                                const completedReports = assignedReports.filter(r => r.status === 'resolved');
+                                const completionRate = assignedReports.length > 0 
+                                  ? (completedReports.length / assignedReports.length) * 100
+                                  : 0;
+                                return { cleaner, completionRate, completedCount: completedReports.length };
+                              })
+                              .sort((a, b) => b.completionRate - a.completionRate)
+                              .slice(0, 5)
+                              .map(({ cleaner, completionRate, completedCount }, index) => (
+                                <div key={cleaner.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold">{cleaner.full_name}</p>
+                                      <p className="text-xs text-muted-foreground">{completedCount} completed</p>
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-green-500">{Math.round(completionRate)}%</Badge>
+                                </div>
+                              ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Workload Distribution */}
+                      <Card className="shadow-card border-border">
+                        <CardHeader>
+                          <CardTitle>Workload Distribution</CardTitle>
+                          <CardDescription>Current assignments per cleaner</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={cleaners.map(cleaner => ({
+                              name: cleaner.full_name.split(' ')[0],
+                              assigned: reports.filter(r => r.assigned_to === cleaner.id && r.status !== 'resolved').length
+                            }))}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip />
+                              <Bar dataKey="assigned" fill="#8b5cf6" name="Active Assignments" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
