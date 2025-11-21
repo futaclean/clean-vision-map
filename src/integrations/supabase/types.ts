@@ -137,6 +137,7 @@ export type Database = {
           location_address: string | null
           location_lat: number
           location_lng: number
+          rejection_reason: string | null
           severity: string | null
           status: string | null
           updated_at: string | null
@@ -154,6 +155,7 @@ export type Database = {
           location_address?: string | null
           location_lat: number
           location_lng: number
+          rejection_reason?: string | null
           severity?: string | null
           status?: string | null
           updated_at?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           location_address?: string | null
           location_lat?: number
           location_lng?: number
+          rejection_reason?: string | null
           severity?: string | null
           status?: string | null
           updated_at?: string | null
