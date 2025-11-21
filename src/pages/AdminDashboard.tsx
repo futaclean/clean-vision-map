@@ -109,6 +109,16 @@ const AdminDashboard = () => {
   const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
+  // Bulk auto-assign state
+  const [bulkAutoAssignOpen, setBulkAutoAssignOpen] = useState(false);
+  const [autoAssignResults, setAutoAssignResults] = useState<{ 
+    assigned: number; 
+    failed: number; 
+    noCleaners: number;
+    assignments: Array<{ reportId: string; cleanerName: string; distance: number }>;
+  } | null>(null);
+  const [isAutoAssigning, setIsAutoAssigning] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
@@ -309,6 +319,136 @@ const AdminDashboard = () => {
     toast({
       title: "Auto-assigned",
       description: `Assigned to ${nearestCleaner.full_name} (${minDistance.toFixed(2)} km away)`,
+    });
+  };
+
+  // Bulk auto-assign all pending unassigned reports
+  const handleBulkAutoAssign = async () => {
+    setIsAutoAssigning(true);
+    setAutoAssignResults(null);
+
+    // Get cleaners with location data
+    const cleanersWithLocation = cleaners.filter(
+      c => c.location_lat != null && c.location_lng != null
+    );
+
+    if (cleanersWithLocation.length === 0) {
+      toast({
+        title: "No cleaners available",
+        description: "No cleaners have location data set. Please update cleaner profiles with their locations.",
+        variant: "destructive",
+      });
+      setIsAutoAssigning(false);
+      return;
+    }
+
+    // Get pending unassigned reports
+    const unassignedReports = reports.filter(
+      r => r.status === 'pending' && !r.assigned_to
+    );
+
+    if (unassignedReports.length === 0) {
+      toast({
+        title: "No reports to assign",
+        description: "There are no pending unassigned reports.",
+      });
+      setIsAutoAssigning(false);
+      return;
+    }
+
+    const assignments: Array<{ reportId: string; cleanerName: string; distance: number }> = [];
+    let assignedCount = 0;
+    let failedCount = 0;
+    let noCleanersCount = 0;
+
+    // Calculate workload for each cleaner (using object instead of Map to avoid conflict with lucide Map)
+    const cleanerWorkload: Record<string, number> = {};
+    cleanersWithLocation.forEach(c => {
+      const activeReports = reports.filter(
+        r => r.assigned_to === c.id && r.status !== 'resolved' && r.status !== 'rejected'
+      ).length;
+      cleanerWorkload[c.id] = activeReports;
+    });
+
+    // Assign each report to the nearest cleaner with consideration for workload
+    for (const report of unassignedReports) {
+      // Calculate distances to all cleaners with their current workload
+      const cleanerDistances = cleanersWithLocation.map(cleaner => {
+        const distance = calculateDistance(
+          report.location_lat,
+          report.location_lng,
+          cleaner.location_lat!,
+          cleaner.location_lng!
+        );
+        const workload = cleanerWorkload[cleaner.id] || 0;
+        
+        // Score combines distance and workload (lower is better)
+        // Add penalty for each existing assignment (2km per assignment)
+        const score = distance + (workload * 2);
+        
+        return {
+          cleaner,
+          distance,
+          workload,
+          score
+        };
+      });
+
+      // Sort by score (best match first)
+      cleanerDistances.sort((a, b) => a.score - b.score);
+
+      const bestMatch = cleanerDistances[0];
+
+      try {
+        const { error } = await supabase
+          .from('waste_reports')
+          .update({ 
+            assigned_to: bestMatch.cleaner.id,
+            status: 'in_progress'
+          })
+          .eq('id', report.id);
+
+        if (error) throw error;
+
+        // Update workload
+        cleanerWorkload[bestMatch.cleaner.id] = (cleanerWorkload[bestMatch.cleaner.id] || 0) + 1;
+
+        assignments.push({
+          reportId: report.id,
+          cleanerName: bestMatch.cleaner.full_name,
+          distance: bestMatch.distance
+        });
+
+        assignedCount++;
+
+        // Send notification to cleaner
+        await supabase.from('notifications').insert({
+          user_id: bestMatch.cleaner.id,
+          title: 'New Report Auto-Assigned',
+          message: `You have been auto-assigned to a waste report at ${report.location_address || 'a location'}`,
+          type: 'info',
+          related_report_id: report.id
+        });
+      } catch (error) {
+        console.error(`Failed to assign report ${report.id}:`, error);
+        failedCount++;
+      }
+    }
+
+    setAutoAssignResults({
+      assigned: assignedCount,
+      failed: failedCount,
+      noCleaners: noCleanersCount,
+      assignments
+    });
+
+    setBulkAutoAssignOpen(true);
+    setIsAutoAssigning(false);
+    await fetchReports();
+
+    toast({
+      title: "Bulk auto-assignment complete",
+      description: `Successfully assigned ${assignedCount} report${assignedCount !== 1 ? 's' : ''}`,
     });
   };
 
@@ -1596,6 +1736,24 @@ const AdminDashboard = () => {
                     <CardDescription>View and manage all waste reports</CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <Button 
+                      onClick={handleBulkAutoAssign}
+                      variant="default"
+                      size="sm"
+                      disabled={isAutoAssigning || reports.filter(r => r.status === 'pending' && !r.assigned_to).length === 0}
+                    >
+                      {isAutoAssigning ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Auto-Assigning...
+                        </>
+                      ) : (
+                        <>
+                          <Map className="h-4 w-4 mr-2" />
+                          Bulk Auto-Assign ({reports.filter(r => r.status === 'pending' && !r.assigned_to).length})
+                        </>
+                      )}
+                    </Button>
                     <Button onClick={exportToCSV} variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
                       Export CSV
@@ -2558,6 +2716,91 @@ const AdminDashboard = () => {
 
                 <div className="flex justify-end">
                   <Button onClick={() => setBulkImportOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Auto-Assign Results Dialog */}
+        <Dialog open={bulkAutoAssignOpen} onOpenChange={setBulkAutoAssignOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Bulk Auto-Assignment Results</DialogTitle>
+              <DialogDescription>
+                Summary of automatic cleaner assignments based on location and workload
+              </DialogDescription>
+            </DialogHeader>
+            {autoAssignResults && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{autoAssignResults.assigned}</p>
+                        <p className="text-sm text-muted-foreground">Successfully Assigned</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-red-600">{autoAssignResults.failed}</p>
+                        <p className="text-sm text-muted-foreground">Failed</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">{autoAssignResults.noCleaners}</p>
+                        <p className="text-sm text-muted-foreground">No Cleaners Available</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {autoAssignResults.assignments.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Assignment Details:</h4>
+                    <div className="max-h-[400px] overflow-y-auto space-y-2">
+                      {autoAssignResults.assignments.map((assignment, index) => (
+                        <div 
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-md border"
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Report #{assignment.reportId.slice(0, 8)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Assigned to: {assignment.cleanerName}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline">
+                              {assignment.distance.toFixed(2)} km
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-muted p-4 rounded-md">
+                  <h4 className="text-sm font-semibold mb-2">How Auto-Assignment Works:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Finds all pending unassigned reports</li>
+                    <li>• Calculates distance to all cleaners with location data</li>
+                    <li>• Considers current workload (active assignments)</li>
+                    <li>• Assigns to nearest available cleaner with balanced workload</li>
+                    <li>• Sends notifications to assigned cleaners</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setBulkAutoAssignOpen(false)}>
                     Close
                   </Button>
                 </div>
