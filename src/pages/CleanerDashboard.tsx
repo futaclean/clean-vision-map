@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RouteOptimizer } from "@/components/RouteOptimizer";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Label } from "@/components/ui/label";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface WasteReport {
   id: string;
@@ -31,6 +33,7 @@ interface WasteReport {
   description: string | null;
   updated_at: string | null;
   after_image_url: string | null;
+  rejection_reason: string | null;
 }
 
 const CleanerDashboard = () => {
@@ -45,6 +48,9 @@ const CleanerDashboard = () => {
   const [afterImage, setAfterImage] = useState<File | null>(null);
   const [afterImagePreview, setAfterImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const { notifyReportStatusChanged } = useNotifications();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -142,11 +148,18 @@ const CleanerDashboard = () => {
     }
   };
 
-  const handleStatusChange = async (reportId: string, newStatus: string) => {
-    const { error } = await supabase
+  const handleStatusChange = async (reportId: string, newStatus: string, reason?: string) => {
+    const updateData: any = { status: newStatus };
+    if (newStatus === 'rejected' && reason) {
+      updateData.rejection_reason = reason;
+    }
+
+    const { error, data: reportData } = await supabase
       .from('waste_reports')
-      .update({ status: newStatus })
-      .eq('id', reportId);
+      .update(updateData)
+      .eq('id', reportId)
+      .select('user_id')
+      .single();
 
     if (error) {
       toast({
@@ -155,12 +168,37 @@ const CleanerDashboard = () => {
         variant: "destructive",
       });
     } else {
+      // Notify the report submitter
+      if (reportData?.user_id) {
+        await notifyReportStatusChanged(reportData.user_id, reportId, newStatus, reason);
+      }
+
       toast({
         title: "Status updated",
         description: "Report status changed successfully",
       });
       fetchReports();
     }
+  };
+
+  const handleReject = () => {
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!selectedReport || !rejectionReason.trim()) {
+      toast({
+        title: "Rejection reason required",
+        description: "Please provide a reason for rejecting this report",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await handleStatusChange(selectedReport.id, 'rejected', rejectionReason);
+    setRejectDialogOpen(false);
+    setReportDialogOpen(false);
+    setRejectionReason("");
   };
 
   const handleAfterImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -790,7 +828,14 @@ const CleanerDashboard = () => {
                 </div>
               )}
 
-              {!afterImage && selectedReport.status !== 'resolved' && (
+              {selectedReport.rejection_reason && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                  <p className="text-sm font-medium text-destructive mb-2">Rejection Reason</p>
+                  <p className="text-sm text-muted-foreground">{selectedReport.rejection_reason}</p>
+                </div>
+              )}
+
+              {!afterImage && selectedReport.status !== 'resolved' && selectedReport.status !== 'rejected' && (
                 <div className="flex gap-2 pt-4">
                   <Select
                     value={selectedReport.status}
@@ -799,7 +844,7 @@ const CleanerDashboard = () => {
                       setReportDialogOpen(false);
                     }}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="flex-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
@@ -808,10 +853,59 @@ const CleanerDashboard = () => {
                       <SelectItem value="resolved">Mark as Resolved (No Photo)</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button
+                    variant="destructive"
+                    onClick={handleReject}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
                 </div>
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Report</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this waste report
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection-reason">Rejection Reason</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Enter the reason for rejecting this report..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[120px] mt-2"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRejectDialogOpen(false);
+                  setRejectionReason("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmReject}
+                disabled={!rejectionReason.trim()}
+              >
+                Confirm Rejection
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

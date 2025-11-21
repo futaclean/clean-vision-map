@@ -46,7 +46,7 @@ export const useNotifications = () => {
     });
   };
 
-  const notifyReportStatusChanged = async (userId: string, reportId: string, newStatus: string) => {
+  const notifyReportStatusChanged = async (userId: string, reportId: string, newStatus: string, rejectionReason?: string) => {
     const statusMessages: Record<string, { title: string; message: string; type: 'info' | 'success' | 'warning' | 'error' }> = {
       in_progress: {
         title: 'Report In Progress',
@@ -60,7 +60,9 @@ export const useNotifications = () => {
       },
       rejected: {
         title: 'Report Rejected',
-        message: 'Your waste report has been rejected',
+        message: rejectionReason 
+          ? `Your waste report has been rejected. Reason: ${rejectionReason}`
+          : 'Your waste report has been rejected',
         type: 'warning'
       }
     };
