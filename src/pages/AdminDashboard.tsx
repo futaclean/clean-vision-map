@@ -49,6 +49,8 @@ interface Profile {
   location_lat?: number | null;
   location_lng?: number | null;
   location_address?: string | null;
+  availability_status?: 'available' | 'busy' | 'off_duty' | null;
+  availability_updated_at?: string | null;
 }
 
 interface UserRole {
@@ -328,17 +330,32 @@ const AdminDashboard = () => {
     setIsAutoAssigning(true);
     setAutoAssignResults(null);
 
-    // Get cleaners with location data
+    // Get cleaners with location data AND available status
     const cleanersWithLocation = cleaners.filter(
-      c => c.location_lat != null && c.location_lng != null
+      c => c.location_lat != null && 
+           c.location_lng != null &&
+           c.availability_status === 'available'  // Only available cleaners
     );
 
     if (cleanersWithLocation.length === 0) {
-      toast({
-        title: "No cleaners available",
-        description: "No cleaners have location data set. Please update cleaner profiles with their locations.",
-        variant: "destructive",
-      });
+      // Check if there are cleaners but they're all unavailable
+      const cleanersWithLocationOnly = cleaners.filter(
+        c => c.location_lat != null && c.location_lng != null
+      );
+      
+      if (cleanersWithLocationOnly.length > 0) {
+        toast({
+          title: "No available cleaners",
+          description: "All cleaners are currently busy or off-duty. Please wait or assign manually.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "No cleaners available",
+          description: "No cleaners have location data set. Please update cleaner profiles with their locations.",
+          variant: "destructive",
+        });
+      }
       setIsAutoAssigning(false);
       return;
     }
@@ -2165,7 +2182,7 @@ const AdminDashboard = () => {
                       )}
                     </div>
                     {/* Cleaner Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <Card className="bg-gradient-card">
                         <CardContent className="pt-6">
                           <div className="flex items-center justify-between">
@@ -2174,6 +2191,19 @@ const AdminDashboard = () => {
                               <p className="text-3xl font-bold text-foreground">{cleaners.length}</p>
                             </div>
                             <UserCheck className="h-8 w-8 text-primary" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gradient-card">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Available Now</p>
+                              <p className="text-3xl font-bold text-green-600">
+                                {cleaners.filter(c => c.availability_status === 'available').length}
+                              </p>
+                            </div>
+                            <UserCheck className="h-8 w-8 text-green-600" />
                           </div>
                         </CardContent>
                       </Card>
@@ -2235,14 +2265,14 @@ const AdminDashboard = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Cleaner Name</TableHead>
+                             <TableHead>Cleaner Name</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Location</TableHead>
+                            <TableHead className="text-center">Availability</TableHead>
                             <TableHead className="text-center">Assigned</TableHead>
                             <TableHead className="text-center">In Progress</TableHead>
                             <TableHead className="text-center">Completed</TableHead>
                             <TableHead className="text-center">Completion Rate</TableHead>
-                            <TableHead className="text-center">Status</TableHead>
                             <TableHead className="text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -2278,6 +2308,24 @@ const AdminDashboard = () => {
                                   )}
                                 </TableCell>
                                 <TableCell className="text-center">
+                                  {cleaner.availability_status === 'available' ? (
+                                    <Badge className="bg-green-500 hover:bg-green-600">
+                                      <span className="w-2 h-2 rounded-full bg-white mr-1"></span>
+                                      Available
+                                    </Badge>
+                                  ) : cleaner.availability_status === 'busy' ? (
+                                    <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                                      <span className="w-2 h-2 rounded-full bg-white mr-1"></span>
+                                      Busy
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-red-500 hover:bg-red-600">
+                                      <span className="w-2 h-2 rounded-full bg-white mr-1"></span>
+                                      Off Duty
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
                                   <Badge variant="outline">{assignedReports.length}</Badge>
                                 </TableCell>
                                 <TableCell className="text-center">
@@ -2300,15 +2348,6 @@ const AdminDashboard = () => {
                                     </div>
                                     <span className="text-sm font-semibold">{completionRate}%</span>
                                   </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {inProgressReports.length > 0 ? (
-                                    <Badge className="bg-blue-500">Active</Badge>
-                                  ) : assignedReports.length > 0 ? (
-                                    <Badge variant="secondary">Assigned</Badge>
-                                  ) : (
-                                    <Badge variant="outline">Available</Badge>
-                                  )}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Button

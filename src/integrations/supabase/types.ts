@@ -79,6 +79,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          availability_status:
+            | Database["public"]["Enums"]["cleaner_availability"]
+            | null
+          availability_updated_at: string | null
           avatar_url: string | null
           created_at: string | null
           current_lat: number | null
@@ -94,6 +98,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          availability_status?:
+            | Database["public"]["Enums"]["cleaner_availability"]
+            | null
+          availability_updated_at?: string | null
           avatar_url?: string | null
           created_at?: string | null
           current_lat?: number | null
@@ -109,6 +117,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          availability_status?:
+            | Database["public"]["Enums"]["cleaner_availability"]
+            | null
+          availability_updated_at?: string | null
           avatar_url?: string | null
           created_at?: string | null
           current_lat?: number | null
@@ -218,6 +230,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cleaner" | "user"
+      cleaner_availability: "available" | "busy" | "off_duty"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -346,6 +359,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cleaner", "user"],
+      cleaner_availability: ["available", "busy", "off_duty"],
     },
   },
 } as const

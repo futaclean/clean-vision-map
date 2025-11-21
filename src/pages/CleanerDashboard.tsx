@@ -55,6 +55,8 @@ const CleanerDashboard = () => {
   const { notifyReportStatusChanged } = useNotifications();
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const { isTracking, error: trackingError } = useLocationTracking(trackingEnabled);
+  const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'busy' | 'off_duty'>('available');
+  const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -118,6 +120,7 @@ const CleanerDashboard = () => {
       if (data) {
         setIsCleaner(true);
         await fetchReports();
+        await fetchAvailabilityStatus();
       } else {
         toast({
           title: "Access Denied",
@@ -132,6 +135,45 @@ const CleanerDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAvailabilityStatus = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('availability_status')
+      .eq('id', user!.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching availability:', error);
+    } else if (data?.availability_status) {
+      setAvailabilityStatus(data.availability_status);
+    }
+  };
+
+  const updateAvailabilityStatus = async (newStatus: 'available' | 'busy' | 'off_duty') => {
+    setIsUpdatingAvailability(true);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ availability_status: newStatus })
+      .eq('id', user!.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update availability status",
+        variant: "destructive",
+      });
+    } else {
+      setAvailabilityStatus(newStatus);
+      toast({
+        title: "Status Updated",
+        description: `You are now ${newStatus.replace('_', ' ')}`,
+      });
+    }
+    
+    setIsUpdatingAvailability(false);
   };
 
   const fetchReports = async () => {
@@ -371,6 +413,43 @@ const CleanerDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {/* Availability Status Selector */}
+              <Card className="bg-card/90 border-white/20 p-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-white">Your Status</Label>
+                  <Select 
+                    value={availabilityStatus} 
+                    onValueChange={(value: 'available' | 'busy' | 'off_duty') => updateAvailabilityStatus(value)}
+                    disabled={isUpdatingAvailability}
+                  >
+                    <SelectTrigger className="w-[140px] h-8 text-xs bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                          <span>Available</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="busy">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                          <span>Busy</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="off_duty">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                          <span>Off Duty</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Card>
+
+              {/* GPS Tracking Toggle */}
               <Card className="bg-card/90 border-white/20 p-3">
                 <div className="flex items-center gap-3">
                   <Label htmlFor="location-tracking" className="cursor-pointer text-sm font-medium">
@@ -396,6 +475,7 @@ const CleanerDashboard = () => {
                   <p className="text-xs text-destructive mt-1">{trackingError}</p>
                 )}
               </Card>
+              
               <NotificationBell />
               <Button onClick={fetchReports} variant="outline" size="sm" className="text-white border-white hover:bg-white/10">
                 <RefreshCw className="h-4 w-4 mr-2" />
