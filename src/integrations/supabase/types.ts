@@ -84,6 +84,9 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
           updated_at: string | null
         }
         Insert: {
@@ -92,6 +95,9 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -100,6 +106,9 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           updated_at?: string | null
         }
         Relationships: []

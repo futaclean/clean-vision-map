@@ -43,6 +43,9 @@ interface Profile {
   id: string;
   full_name: string;
   email: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_address?: string | null;
 }
 
 interface UserRole {
@@ -232,6 +235,69 @@ const AdminDashboard = () => {
     } else {
       setReports(data || []);
     }
+  };
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
+  // Auto-assign nearest cleaner to a report
+  const handleAutoAssignNearest = async (reportId: string) => {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+
+    // Filter cleaners with valid locations
+    const cleanersWithLocation = cleaners.filter(
+      c => c.location_lat != null && c.location_lng != null
+    );
+
+    if (cleanersWithLocation.length === 0) {
+      toast({
+        title: "No cleaners available",
+        description: "No cleaners have location data set. Please update cleaner profiles with their locations.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Find nearest cleaner
+    let nearestCleaner = cleanersWithLocation[0];
+    let minDistance = calculateDistance(
+      report.location_lat,
+      report.location_lng,
+      nearestCleaner.location_lat!,
+      nearestCleaner.location_lng!
+    );
+
+    cleanersWithLocation.forEach(cleaner => {
+      const distance = calculateDistance(
+        report.location_lat,
+        report.location_lng,
+        cleaner.location_lat!,
+        cleaner.location_lng!
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestCleaner = cleaner;
+      }
+    });
+
+    // Assign to nearest cleaner
+    await handleAssignCleaner(reportId, nearestCleaner.id);
+    
+    toast({
+      title: "Auto-assigned",
+      description: `Assigned to ${nearestCleaner.full_name} (${minDistance.toFixed(2)} km away)`,
+    });
   };
 
   const handleAssignCleaner = async (reportId: string, cleanerId: string) => {
@@ -1585,26 +1651,36 @@ const AdminDashboard = () => {
                             <TableCell>{getSeverityBadge(report.severity)}</TableCell>
                             <TableCell>{getStatusBadge(report.status)}</TableCell>
                             <TableCell>
-                              <Select
-                                value={report.assigned_to || 'unassigned'}
-                                onValueChange={(value) => handleAssignCleaner(report.id, value)}
-                              >
-                                <SelectTrigger className="w-[150px]">
-                                  <SelectValue placeholder="Select cleaner" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background z-50" position="popper">
-                                  <SelectItem value="unassigned">
-                                    <span className="text-muted-foreground">Unassigned</span>
-                                  </SelectItem>
-                                  {cleaners.length > 0 ? cleaners.map((cleaner) => (
-                                    <SelectItem key={cleaner.id} value={cleaner.id}>
-                                      {cleaner.full_name}
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={report.assigned_to || 'unassigned'}
+                                  onValueChange={(value) => handleAssignCleaner(report.id, value)}
+                                >
+                                  <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Select cleaner" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background z-50" position="popper">
+                                    <SelectItem value="unassigned">
+                                      <span className="text-muted-foreground">Unassigned</span>
                                     </SelectItem>
-                                  )) : (
-                                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading cleaners...</div>
-                                  )}
-                                </SelectContent>
-                              </Select>
+                                    {cleaners.length > 0 ? cleaners.map((cleaner) => (
+                                      <SelectItem key={cleaner.id} value={cleaner.id}>
+                                        {cleaner.full_name}
+                                      </SelectItem>
+                                    )) : (
+                                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading cleaners...</div>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAutoAssignNearest(report.id)}
+                                  title="Auto-assign nearest cleaner"
+                                >
+                                  <Map className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
