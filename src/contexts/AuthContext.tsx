@@ -85,11 +85,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
 
       if (data.user) {
+        // Check user role to redirect appropriately
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        const userRoles = roles?.map(r => r.role) || [];
+        
         toast({
           title: "Welcome back!",
           description: "Successfully signed in",
         });
-        navigate('/dashboard');
+
+        // Redirect based on role priority: admin > cleaner > user
+        if (userRoles.includes('admin')) {
+          navigate('/admin');
+        } else if (userRoles.includes('cleaner')) {
+          navigate('/cleaner');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       toast({
