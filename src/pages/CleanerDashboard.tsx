@@ -17,6 +17,8 @@ import { CleanerRouteView } from "@/components/CleanerRouteView";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useLocationTracking } from "@/hooks/useLocationTracking";
+import { Switch } from "@/components/ui/switch";
 
 interface WasteReport {
   id: string;
@@ -51,6 +53,8 @@ const CleanerDashboard = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const { notifyReportStatusChanged } = useNotifications();
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const { isTracking, error: trackingError } = useLocationTracking(trackingEnabled);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -366,7 +370,32 @@ const CleanerDashboard = () => {
                 <span className="text-xl font-bold text-white">Cleaner Dashboard</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <Card className="bg-card/90 border-white/20 p-3">
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="location-tracking" className="cursor-pointer text-sm font-medium">
+                    {isTracking ? (
+                      <span className="flex items-center gap-2">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        <span>Live Tracking</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Enable Tracking</span>
+                    )}
+                  </Label>
+                  <Switch
+                    id="location-tracking"
+                    checked={trackingEnabled}
+                    onCheckedChange={setTrackingEnabled}
+                  />
+                </div>
+                {trackingError && (
+                  <p className="text-xs text-destructive mt-1">{trackingError}</p>
+                )}
+              </Card>
               <NotificationBell />
               <Button onClick={fetchReports} variant="outline" size="sm" className="text-white border-white hover:bg-white/10">
                 <RefreshCw className="h-4 w-4 mr-2" />

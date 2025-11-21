@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload, Navigation } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,8 +20,8 @@ import { Input } from "@/components/ui/input";
 import * as XLSX from 'xlsx';
 import { cn } from "@/lib/utils";
 import { WasteReportsMap } from "@/components/WasteReportsMap";
-import { CleanersOverviewMap } from "@/components/CleanersOverviewMap";
 import { CleanerRouteOptimizer } from "@/components/CleanerRouteOptimizer";
+import { CleanersOverviewMap } from "@/components/CleanersOverviewMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -1471,7 +1471,7 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="map">Reports Map</TabsTrigger>
-            <TabsTrigger value="cleaners-map">Cleaners Map</TabsTrigger>
+            <TabsTrigger value="cleaners-map">Live Tracking</TabsTrigger>
             <TabsTrigger value="route-planning">Route Planning</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
             <TabsTrigger value="cleaners">Cleaners</TabsTrigger>
@@ -1701,30 +1701,15 @@ const AdminDashboard = () => {
             <Card className="shadow-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Map className="h-5 w-5" />
-                  Cleaners Overview Map
+                  <Navigation className="h-5 w-5" />
+                  Live Cleaner Tracking
                 </CardTitle>
                 <CardDescription>
-                  View all cleaner locations with color-coded markers showing their workload status
+                  Real-time GPS tracking of cleaners with location tracking enabled
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <CleanersOverviewMap 
-                  cleaners={cleaners
-                    .filter(c => c.location_lat != null && c.location_lng != null)
-                    .map(cleaner => ({
-                      id: cleaner.id,
-                      full_name: cleaner.full_name,
-                      location_lat: cleaner.location_lat!,
-                      location_lng: cleaner.location_lng!,
-                      location_address: cleaner.location_address,
-                      assignedCount: reports.filter(r => 
-                        r.assigned_to === cleaner.id && 
-                        r.status !== 'resolved' && 
-                        r.status !== 'rejected'
-                      ).length
-                    }))}
-                />
+                <CleanersOverviewMap />
               </CardContent>
             </Card>
           </TabsContent>
