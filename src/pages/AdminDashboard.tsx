@@ -80,6 +80,9 @@ const AdminDashboard = () => {
   const [filterName, setFilterName] = useState<string>("");
   const [showSaveFilter, setShowSaveFilter] = useState(false);
   
+  // Cleaner search
+  const [cleanerSearch, setCleanerSearch] = useState<string>("");
+  
   // Create cleaner dialog
   const [createCleanerOpen, setCreateCleanerOpen] = useState(false);
   const [newCleanerEmail, setNewCleanerEmail] = useState("");
@@ -1669,6 +1672,27 @@ const AdminDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Search Bar */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search cleaners by name or email..."
+                          value={cleanerSearch}
+                          onChange={(e) => setCleanerSearch(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      {cleanerSearch && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCleanerSearch("")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     {/* Cleaner Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <Card className="bg-gradient-card">
@@ -1750,7 +1774,15 @@ const AdminDashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {cleaners.map((cleaner) => {
+                          {cleaners
+                            .filter((cleaner) => {
+                              const searchLower = cleanerSearch.toLowerCase();
+                              return (
+                                cleaner.full_name.toLowerCase().includes(searchLower) ||
+                                cleaner.email.toLowerCase().includes(searchLower)
+                              );
+                            })
+                            .map((cleaner) => {
                             const assignedReports = reports.filter(r => r.assigned_to === cleaner.id);
                             const inProgressReports = assignedReports.filter(r => r.status === 'in_progress');
                             const completedReports = assignedReports.filter(r => r.status === 'resolved');
@@ -1800,6 +1832,17 @@ const AdminDashboard = () => {
                           })}
                         </TableBody>
                       </Table>
+                      {cleaners.filter((cleaner) => {
+                        const searchLower = cleanerSearch.toLowerCase();
+                        return (
+                          cleaner.full_name.toLowerCase().includes(searchLower) ||
+                          cleaner.email.toLowerCase().includes(searchLower)
+                        );
+                      }).length === 0 && cleanerSearch && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No cleaners found matching "{cleanerSearch}"
+                        </div>
+                      )}
                     </div>
 
                     {/* Detailed Performance Charts */}
@@ -1813,6 +1856,13 @@ const AdminDashboard = () => {
                         <CardContent>
                           <div className="space-y-4">
                             {cleaners
+                              .filter((cleaner) => {
+                                const searchLower = cleanerSearch.toLowerCase();
+                                return (
+                                  cleaner.full_name.toLowerCase().includes(searchLower) ||
+                                  cleaner.email.toLowerCase().includes(searchLower)
+                                );
+                              })
                               .map(cleaner => {
                                 const assignedReports = reports.filter(r => r.assigned_to === cleaner.id);
                                 const completedReports = assignedReports.filter(r => r.status === 'resolved');
@@ -1849,7 +1899,15 @@ const AdminDashboard = () => {
                         </CardHeader>
                         <CardContent>
                           <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={cleaners.map(cleaner => ({
+                            <BarChart data={cleaners
+                              .filter((cleaner) => {
+                                const searchLower = cleanerSearch.toLowerCase();
+                                return (
+                                  cleaner.full_name.toLowerCase().includes(searchLower) ||
+                                  cleaner.email.toLowerCase().includes(searchLower)
+                                );
+                              })
+                              .map(cleaner => ({
                               name: cleaner.full_name.split(' ')[0],
                               assigned: reports.filter(r => r.assigned_to === cleaner.id && r.status !== 'resolved').length
                             }))}>
