@@ -26,6 +26,26 @@ export const useLocationTracking = (enabled: boolean) => {
       }
 
       try {
+        // First check if we have permission
+        if ('permissions' in navigator) {
+          try {
+            const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+            
+            if (permissionStatus.state === 'denied') {
+              const errorMsg = 'Location access denied. Please enable location permissions in your browser settings.';
+              setError(errorMsg);
+              toast.error(errorMsg, {
+                duration: 5000,
+                description: 'Go to browser settings → Site settings → Location to enable access'
+              });
+              return;
+            }
+          } catch (permError) {
+            // Some browsers don't support permission API, continue anyway
+            console.log('Permission API not available, attempting to access location directly');
+          }
+        }
+
         // Request permission and start watching position
         watchId = navigator.geolocation.watchPosition(
           async (position) => {
@@ -52,8 +72,31 @@ export const useLocationTracking = (enabled: boolean) => {
           },
           (error) => {
             console.error('Geolocation error:', error);
-            setError(error.message);
-            toast.error(`Location error: ${error.message}`);
+            
+            // Handle different error codes with user-friendly messages
+            let errorMessage = 'Unable to access location';
+            
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable. Please check your device settings.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please try again.';
+                break;
+              default:
+                errorMessage = error.message || 'Unknown location error occurred';
+            }
+            
+            setError(errorMessage);
+            toast.error(errorMessage, {
+              duration: 5000,
+              description: error.code === error.PERMISSION_DENIED 
+                ? 'Go to browser settings → Site settings → Location to enable access'
+                : undefined
+            });
             setIsTracking(false);
           },
           {
@@ -77,7 +120,14 @@ export const useLocationTracking = (enabled: boolean) => {
                 })
                 .eq('id', user.id);
             },
-            (error) => console.error('Position update error:', error)
+            (error) => {
+              console.error('Position update error:', error);
+              // Silently handle periodic update errors to avoid spamming user
+              if (error.code === error.PERMISSION_DENIED) {
+                // If permission is denied during update, stop tracking
+                stopTracking();
+              }
+            }
           );
         }, 30000);
 
