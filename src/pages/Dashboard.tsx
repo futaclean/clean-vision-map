@@ -504,6 +504,9 @@ const Dashboard = () => {
               <Link to="/report" className="text-white/80 hover:text-white font-medium">
                 Report Waste
               </Link>
+              <Link to="/preferences" className="text-white/80 hover:text-white font-medium">
+                Preferences
+              </Link>
               {isAdmin && (
                 <Link to="/admin" className="text-white/80 hover:text-white font-medium flex items-center gap-1">
                   <Shield className="h-4 w-4" />

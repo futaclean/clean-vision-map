@@ -31,17 +31,28 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const { frequency } = await req.json();
+    
+    if (!frequency || (frequency !== "weekly" && frequency !== "monthly")) {
+      throw new Error("Invalid frequency. Must be 'weekly' or 'monthly'");
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Fetching all user profiles...");
+    console.log(`Fetching all user profiles for ${frequency} summaries...`);
 
-    // Get all user profiles with email
+    // Get all user profiles with email and preferences
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, email, full_name");
+      .select(`
+        id,
+        email,
+        full_name,
+        email_preferences:email_preferences(weekly_enabled, monthly_enabled)
+      `);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
@@ -54,6 +65,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     // For each user, get their report summary
     for (const profile of profiles || []) {
+      // Check if user has opted in for this frequency
+      const prefs = profile.email_preferences?.[0];
+      const shouldSend = frequency === "weekly" 
+        ? prefs?.weekly_enabled !== false 
+        : prefs?.monthly_enabled !== false;
+
+      if (!shouldSend) {
+        console.log(`Skipping ${profile.email} - opted out of ${frequency} summaries`);
+        continue;
+      }
       const { data: reports, error: reportsError } = await supabase
         .from("waste_reports")
         .select("*")
