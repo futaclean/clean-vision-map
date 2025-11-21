@@ -30,27 +30,9 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Verify the caller is an admin using the anon key client
+    // Extract and verify the JWT token using admin client
     const token = authHeader.replace('Bearer ', '');
-    
-    // Create a client with the user's token to verify auth
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader
-          }
-        },
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
       console.error('User verification failed:', userError);
