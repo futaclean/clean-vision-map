@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -342,6 +344,117 @@ const Dashboard = () => {
     }
   };
 
+  const exportToCSV = () => {
+    if (recentReports.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "There are no reports to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = ['Date', 'Waste Type', 'Status', 'Severity', 'Location', 'Description'];
+    const csvData = recentReports.map(report => [
+      new Date(report.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      report.waste_type || 'N/A',
+      report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1),
+      report.severity ? report.severity.charAt(0).toUpperCase() + report.severity.slice(1) : 'N/A',
+      report.location_address || 'Location not specified',
+      report.description || 'No description'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `waste-reports-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export successful",
+      description: "CSV file has been downloaded",
+    });
+  };
+
+  const exportToPDF = () => {
+    if (recentReports.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "There are no reports to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text('Waste Reports', 14, 20);
+    
+    // Add metadata
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`, 14, 28);
+    doc.text(`Total Reports: ${totalReports}`, 14, 34);
+
+    // Prepare table data
+    const tableData = recentReports.map(report => [
+      new Date(report.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      report.waste_type || 'N/A',
+      report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1),
+      report.severity ? report.severity.charAt(0).toUpperCase() + report.severity.slice(1) : 'N/A',
+      report.location_address || 'Not specified'
+    ]);
+
+    // Add table
+    autoTable(doc, {
+      head: [['Date', 'Waste Type', 'Status', 'Severity', 'Location']],
+      body: tableData,
+      startY: 40,
+      headStyles: {
+        fillColor: [34, 197, 94], // Green color
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251]
+      },
+      margin: { top: 40 }
+    });
+
+    doc.save(`waste-reports-${new Date().toISOString().split('T')[0]}.pdf`);
+
+    toast({
+      title: "Export successful",
+      description: "PDF file has been downloaded",
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       resolved: { variant: "default" as const, className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
@@ -544,13 +657,25 @@ const Dashboard = () => {
         {/* Recent Reports */}
         <Card className="shadow-card border-border">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <CardTitle>Recent Reports</CardTitle>
                 <CardDescription>
                   {totalReports > 0 ? `Showing ${recentReports.length} of ${totalReports} reports` : 'Your latest waste reports'}
                 </CardDescription>
               </div>
+              {recentReports.length > 0 && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={exportToCSV}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportToPDF}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Search and Filters */}
