@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { RouteOptimizer } from "@/components/RouteOptimizer";
+import { CleanerRouteView } from "@/components/CleanerRouteView";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -687,14 +687,9 @@ const CleanerDashboard = () => {
 
           {/* Route Planner Tab */}
           <TabsContent value="route" className="space-y-4">
-            <RouteOptimizer 
-              reports={reports.filter(r => r.status !== 'resolved')} 
-              onRouteCalculated={(distance, duration) => {
-                toast({
-                  title: "Route calculated",
-                  description: `${distance.toFixed(1)} km, ${Math.round(duration)} minutes`,
-                });
-              }}
+            <CleanerRouteView 
+              reports={reports.filter(r => r.status !== 'resolved' && r.status !== 'rejected')} 
+              cleanerId={user!.id}
             />
           </TabsContent>
         </Tabs>
