@@ -26,6 +26,7 @@ import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { LocationPicker } from "@/components/LocationPicker";
+import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus } from "@/lib/constants";
 
 interface WasteReport {
   id: string;
@@ -543,6 +544,16 @@ const AdminDashboard = () => {
   };
 
   const handleStatusChange = async (reportId: string, newStatus: string) => {
+    // Validate status before submitting
+    if (!isValidReportStatus(newStatus)) {
+      toast({
+        title: "Invalid Status",
+        description: `"${newStatus}" is not a valid status. Please select a valid option.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const report = reports.find(r => r.id === reportId);
     
     const { error } = await supabase
@@ -1149,6 +1160,16 @@ const AdminDashboard = () => {
   const handleBulkStatusUpdate = async () => {
     if (!bulkAction || selectedReportIds.length === 0) return;
 
+    // Validate status before submitting
+    if (!isValidReportStatus(bulkAction)) {
+      toast({
+        title: "Invalid Status",
+        description: `"${bulkAction}" is not a valid status. Please select a valid option.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('waste_reports')
@@ -1662,10 +1683,11 @@ const AdminDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
+                      {VALID_REPORT_STATUSES.map(status => (
+                        <SelectItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
@@ -1803,10 +1825,11 @@ const AdminDashboard = () => {
                             <SelectValue placeholder="Change status" />
                           </SelectTrigger>
                           <SelectContent className="bg-background">
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="resolved">Resolved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
+                            {VALID_REPORT_STATUSES.map(status => (
+                              <SelectItem key={status} value={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <Button 
@@ -1867,10 +1890,11 @@ const AdminDashboard = () => {
                       </SelectTrigger>
                       <SelectContent className="bg-background">
                         <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
+                        {VALID_REPORT_STATUSES.map(status => (
+                          <SelectItem key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 
@@ -2110,10 +2134,11 @@ const AdminDashboard = () => {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background z-50">
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="resolved">Resolved</SelectItem>
-                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                    {VALID_REPORT_STATUSES.map(status => (
+                                      <SelectItem key={status} value={status}>
+                                        {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                                 <Button

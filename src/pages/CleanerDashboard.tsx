@@ -20,6 +20,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
 import { Switch } from "@/components/ui/switch";
 import { AIAnalysisDialog } from "@/components/AIAnalysisDialog";
+import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus } from "@/lib/constants";
 
 interface WasteReport {
   id: string;
@@ -199,6 +200,16 @@ const CleanerDashboard = () => {
   };
 
   const handleStatusChange = async (reportId: string, newStatus: string, reason?: string) => {
+    // Validate status before submitting
+    if (!isValidReportStatus(newStatus)) {
+      toast({
+        title: "Invalid Status",
+        description: `"${newStatus}" is not a valid status. Please select a valid option.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const updateData: any = { status: newStatus };
     if (newStatus === 'rejected' && reason) {
       updateData.rejection_reason = reason;
@@ -1000,9 +1011,13 @@ const CleanerDashboard = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
-                      <SelectItem value="pending">Mark as Pending</SelectItem>
-                      <SelectItem value="in_progress">Mark as In Progress</SelectItem>
-                      <SelectItem value="resolved">Mark as Resolved (No Photo)</SelectItem>
+                      {VALID_REPORT_STATUSES.filter(status => status !== 'rejected' && status !== 'assigned').map(status => (
+                        <SelectItem key={status} value={status}>
+                          {status === 'pending' && 'Mark as Pending'}
+                          {status === 'in_progress' && 'Mark as In Progress'}
+                          {status === 'resolved' && 'Mark as Resolved (No Photo)'}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Button
