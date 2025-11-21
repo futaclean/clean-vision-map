@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import LocationMap from "@/components/LocationMap";
+import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -198,6 +199,16 @@ const ReportWaste = () => {
       toast({
         title: "Waste type required",
         description: "Please select a waste category",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate waste type
+    if (!isValidWasteType(wasteType)) {
+      toast({
+        title: "Invalid waste type",
+        description: "Please select a valid waste category",
         variant: "destructive",
       });
       return;
@@ -459,12 +470,11 @@ const ReportWaste = () => {
                     <SelectValue placeholder="Select waste type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="plastic">Plastic</SelectItem>
-                    <SelectItem value="paper">Paper</SelectItem>
-                    <SelectItem value="food">Food Waste</SelectItem>
-                    <SelectItem value="hazardous">Hazardous</SelectItem>
-                    <SelectItem value="mixed">Mixed Waste</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    {VALID_WASTE_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
