@@ -14,12 +14,31 @@ interface LocationPickerProps {
   lat?: number | null;
   lng?: number | null;
   onLocationSelect: (lat: number, lng: number) => void;
+  onAddressSelect?: (address: string) => void;
 }
 
-export const LocationPicker = ({ lat, lng, onLocationSelect }: LocationPickerProps) => {
+export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: LocationPickerProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reverse geocoding function using Nominatim
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    if (!onAddressSelect) return;
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data.display_name) {
+        onAddressSelect(data.display_name);
+      }
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+    }
+  };
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -50,6 +69,7 @@ export const LocationPicker = ({ lat, lng, onLocationSelect }: LocationPickerPro
       marker.on('dragend', () => {
         const position = marker.getLatLng();
         onLocationSelect(position.lat, position.lng);
+        reverseGeocode(position.lat, position.lng);
       });
     }
 
@@ -72,10 +92,12 @@ export const LocationPicker = ({ lat, lng, onLocationSelect }: LocationPickerPro
         marker.on('dragend', () => {
           const position = marker.getLatLng();
           onLocationSelect(position.lat, position.lng);
+          reverseGeocode(position.lat, position.lng);
         });
       }
 
       onLocationSelect(newLat, newLng);
+      reverseGeocode(newLat, newLng);
     });
 
     return () => {
@@ -101,11 +123,12 @@ export const LocationPicker = ({ lat, lng, onLocationSelect }: LocationPickerPro
         marker.on('dragend', () => {
           const position = marker.getLatLng();
           onLocationSelect(position.lat, position.lng);
+          reverseGeocode(position.lat, position.lng);
         });
       }
       mapRef.current.setView([lat, lng], 13);
     }
-  }, [lat, lng, onLocationSelect]);
+  }, [lat, lng, onLocationSelect, onAddressSelect]);
 
   return (
     <div className="space-y-2">
