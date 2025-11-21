@@ -719,6 +719,7 @@ const CleanerDashboard = () => {
             <CleanerRouteView 
               reports={reports.filter(r => r.status !== 'resolved' && r.status !== 'rejected')} 
               cleanerId={user!.id}
+              onReportComplete={fetchReports}
             />
           </TabsContent>
         </Tabs>
