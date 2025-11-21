@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import * as XLSX from 'xlsx';
 import { cn } from "@/lib/utils";
 import { WasteReportsMap } from "@/components/WasteReportsMap";
+import { CleanersOverviewMap } from "@/components/CleanersOverviewMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -1328,7 +1329,8 @@ const AdminDashboard = () => {
         <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="map">Map View</TabsTrigger>
+            <TabsTrigger value="map">Reports Map</TabsTrigger>
+            <TabsTrigger value="cleaners-map">Cleaners Map</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
             <TabsTrigger value="cleaners">Cleaners</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
@@ -1548,6 +1550,38 @@ const AdminDashboard = () => {
                 <WasteReportsMap 
                   reports={mapFilteredReports} 
                   onReportClick={handleViewReport}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cleaners-map" className="space-y-6">
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="h-5 w-5" />
+                  Cleaners Overview Map
+                </CardTitle>
+                <CardDescription>
+                  View all cleaner locations with color-coded markers showing their workload status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CleanersOverviewMap 
+                  cleaners={cleaners
+                    .filter(c => c.location_lat != null && c.location_lng != null)
+                    .map(cleaner => ({
+                      id: cleaner.id,
+                      full_name: cleaner.full_name,
+                      location_lat: cleaner.location_lat!,
+                      location_lng: cleaner.location_lng!,
+                      location_address: cleaner.location_address,
+                      assignedCount: reports.filter(r => 
+                        r.assigned_to === cleaner.id && 
+                        r.status !== 'resolved' && 
+                        r.status !== 'rejected'
+                      ).length
+                    }))}
                 />
               </CardContent>
             </Card>
