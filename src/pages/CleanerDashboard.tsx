@@ -20,7 +20,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
 import { Switch } from "@/components/ui/switch";
 import { AIAnalysisDialog } from "@/components/AIAnalysisDialog";
-import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus } from "@/lib/constants";
+import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus, VALID_SEVERITY_LEVELS, isValidSeverity, getSeverityLabel } from "@/lib/constants";
 
 interface WasteReport {
   id: string;
@@ -414,7 +414,8 @@ const CleanerDashboard = () => {
       medium: "bg-yellow-600",
       high: "bg-red-600",
     };
-    return <Badge className={colors[severity] || "bg-gray-500"}>{severity}</Badge>;
+    const label = isValidSeverity(severity) ? getSeverityLabel(severity) : severity;
+    return <Badge className={colors[severity] || "bg-gray-500"}>{label}</Badge>;
   };
 
   const handleViewReport = (report: WasteReport) => {
