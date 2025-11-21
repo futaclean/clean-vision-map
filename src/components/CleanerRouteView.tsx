@@ -6,9 +6,10 @@ import 'leaflet-routing-machine';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Clock, Ruler, Route as RouteIcon, RefreshCw, ClipboardList } from 'lucide-react';
+import { Navigation, MapPin, Clock, Ruler, Route as RouteIcon, RefreshCw, ClipboardList, CheckCircle, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Report {
   id: string;
@@ -23,6 +24,7 @@ interface Report {
 interface CleanerRouteViewProps {
   reports: Report[];
   cleanerId: string;
+  onReportComplete?: () => void;
 }
 
 // Calculate distance between two points using Haversine formula
@@ -83,7 +85,7 @@ const optimizeRoute = (
   return route;
 };
 
-export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) => {
+export const CleanerRouteView = ({ reports, cleanerId, onReportComplete }: CleanerRouteViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const routingControlRef = useRef<any>(null);
@@ -94,6 +96,9 @@ export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) 
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [isCalculating, setIsCalculating] = useState(false);
   const [autoCalculated, setAutoCalculated] = useState(false);
+  const [quickCompleteDialog, setQuickCompleteDialog] = useState(false);
+  const [selectedReportForComplete, setSelectedReportForComplete] = useState<Report | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   // Fetch cleaner's location
   useEffect(() => {
@@ -267,14 +272,40 @@ export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) 
         // Add popup
         if (!isStart) {
           const report = route[i - 1];
-          marker.bindPopup(`
-            <div class="p-2">
+          const popupContent = document.createElement('div');
+          popupContent.className = 'p-3 min-w-[200px]';
+          popupContent.innerHTML = `
+            <div class="space-y-2">
               <p class="font-semibold text-sm">Stop ${i}</p>
               ${report.location_address ? `<p class="text-xs mt-1">${report.location_address}</p>` : ''}
               ${report.waste_type ? `<p class="text-xs text-gray-600">Type: ${report.waste_type}</p>` : ''}
               ${report.severity ? `<p class="text-xs text-gray-600">Severity: ${report.severity}</p>` : ''}
+              <button 
+                id="complete-btn-${report.id}"
+                class="w-full mt-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Quick Complete
+              </button>
             </div>
-          `);
+          `;
+          
+          const popup = L.popup().setContent(popupContent);
+          marker.bindPopup(popup);
+          
+          // Add event listener after popup opens
+          marker.on('popupopen', () => {
+            const btn = document.getElementById(`complete-btn-${report.id}`);
+            if (btn) {
+              btn.addEventListener('click', () => {
+                handleQuickComplete(report);
+                marker.closePopup();
+              });
+            }
+          });
         } else {
           marker.bindPopup(`
             <div class="p-2">
@@ -289,6 +320,58 @@ export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) 
     }).addTo(mapRef.current);
 
     routingControlRef.current = routingControl;
+  };
+
+  const handleQuickComplete = (report: Report) => {
+    setSelectedReportForComplete(report);
+    setQuickCompleteDialog(true);
+  };
+
+  const confirmQuickComplete = async () => {
+    if (!selectedReportForComplete) return;
+
+    setIsCompleting(true);
+
+    try {
+      const { error } = await supabase
+        .from('waste_reports')
+        .update({ 
+          status: 'resolved'
+        })
+        .eq('id', selectedReportForComplete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Report Completed!",
+        description: "The report has been marked as resolved. Great work!",
+      });
+
+      // Notify parent to refresh reports
+      if (onReportComplete) {
+        onReportComplete();
+      }
+
+      // Remove completed report from optimized route
+      setOptimizedRoute(prev => prev.filter(r => r.id !== selectedReportForComplete.id));
+      
+      setQuickCompleteDialog(false);
+      setSelectedReportForComplete(null);
+
+      // Recalculate route if there are remaining reports
+      if (optimizedRoute.length > 1) {
+        setTimeout(() => calculateOptimalRoute(), 500);
+      }
+    } catch (error: any) {
+      console.error('Error completing report:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   if (!cleanerLocation) {
@@ -443,6 +526,15 @@ export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) 
                           )}
                         </div>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-shrink-0 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                        onClick={() => handleQuickComplete(report)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Complete
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -466,9 +558,69 @@ export const CleanerRouteView = ({ reports, cleanerId }: CleanerRouteViewProps) 
             <li>• Follow the numbered sequence for most efficient path</li>
             <li>• Time estimate includes 15 minutes per stop</li>
             <li>• Map shows turn-by-turn directions</li>
+            <li>• Use "Complete" button for quick marking without uploading photos</li>
           </ul>
         </div>
       )}
+
+      {/* Quick Complete Dialog */}
+      <AlertDialog open={quickCompleteDialog} onOpenChange={setQuickCompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete this report?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You're about to mark this report as completed without uploading a completion photo.
+              </p>
+              {selectedReportForComplete && (
+                <div className="p-3 bg-muted rounded-lg space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedReportForComplete.location_address || 'Unknown location'}
+                  </p>
+                  <div className="flex gap-2">
+                    {selectedReportForComplete.waste_type && (
+                      <Badge variant="outline" className="text-xs">
+                        {selectedReportForComplete.waste_type}
+                      </Badge>
+                    )}
+                    {selectedReportForComplete.severity && (
+                      <Badge variant="outline" className="text-xs">
+                        {selectedReportForComplete.severity}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Camera className="h-4 w-4 text-blue-600 mt-0.5" />
+                <p className="text-xs text-blue-900 dark:text-blue-100">
+                  You can upload a completion photo later from the full report view in your dashboard if needed.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCompleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmQuickComplete}
+              disabled={isCompleting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isCompleting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark Complete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
