@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await resend.emails.send({
           from: "CleanFUTA <onboarding@resend.dev>",
           to: [summary.email],
-          subject: "Your CleanFUTA Report Summary",
+          subject: `Your CleanFUTA ${frequency === "weekly" ? "Weekly" : "Monthly"} Report Summary`,
           html: emailHtml,
         });
 
