@@ -406,21 +406,13 @@ const AdminDashboard = () => {
     }
 
     try {
-      // Get current session for authorization
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       // Call edge function to create cleaner with proper permissions
+      // The Supabase client automatically includes the authorization header
       const { data, error } = await supabase.functions.invoke('create-cleaner', {
         body: {
           email: newCleanerEmail,
           password: newCleanerPassword,
           full_name: newCleanerName
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       });
 
