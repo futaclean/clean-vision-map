@@ -23,6 +23,7 @@ import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LocationPicker } from "@/components/LocationPicker";
 
 interface WasteReport {
   id: string;
@@ -94,6 +95,7 @@ const AdminDashboard = () => {
     location_lat: "",
     location_lng: ""
   });
+  const [useMapPicker, setUseMapPicker] = useState(true);
   
   // Create cleaner dialog
   const [createCleanerOpen, setCreateCleanerOpen] = useState(false);
@@ -692,6 +694,7 @@ const AdminDashboard = () => {
       location_lat: cleaner.location_lat?.toString() || "",
       location_lng: cleaner.location_lng?.toString() || ""
     });
+    setUseMapPicker(true); // Default to map picker
     setEditCleanerOpen(true);
   };
 
@@ -2464,6 +2467,32 @@ const AdminDashboard = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Location Input Method</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Choose how to set the location
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={useMapPicker ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseMapPicker(true)}
+                  >
+                    <Map className="h-4 w-4 mr-2" />
+                    Map Picker
+                  </Button>
+                  <Button
+                    variant={!useMapPicker ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseMapPicker(false)}
+                  >
+                    Manual Input
+                  </Button>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label htmlFor="location_address" className="text-sm font-medium">
                   Location Address
@@ -2478,55 +2507,63 @@ const AdminDashboard = () => {
                   })}
                   maxLength={255}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter the cleaner's base location or work area
-                </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="location_lat" className="text-sm font-medium">
-                    Latitude
-                  </label>
-                  <Input
-                    id="location_lat"
-                    type="number"
-                    step="any"
-                    placeholder="e.g. 40.7128"
-                    value={editCleanerData.location_lat}
-                    onChange={(e) => setEditCleanerData({
+
+              {useMapPicker ? (
+                <LocationPicker
+                  lat={editCleanerData.location_lat ? parseFloat(editCleanerData.location_lat) : null}
+                  lng={editCleanerData.location_lng ? parseFloat(editCleanerData.location_lng) : null}
+                  onLocationSelect={(lat, lng) => {
+                    setEditCleanerData({
                       ...editCleanerData,
-                      location_lat: e.target.value
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Range: -90 to 90
-                  </p>
+                      location_lat: lat.toFixed(6),
+                      location_lng: lng.toFixed(6)
+                    });
+                  }}
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="location_lat" className="text-sm font-medium">
+                      Latitude
+                    </label>
+                    <Input
+                      id="location_lat"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 40.7128"
+                      value={editCleanerData.location_lat}
+                      onChange={(e) => setEditCleanerData({
+                        ...editCleanerData,
+                        location_lat: e.target.value
+                      })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Range: -90 to 90
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="location_lng" className="text-sm font-medium">
+                      Longitude
+                    </label>
+                    <Input
+                      id="location_lng"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. -74.0060"
+                      value={editCleanerData.location_lng}
+                      onChange={(e) => setEditCleanerData({
+                        ...editCleanerData,
+                        location_lng: e.target.value
+                      })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Range: -180 to 180
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="location_lng" className="text-sm font-medium">
-                    Longitude
-                  </label>
-                  <Input
-                    id="location_lng"
-                    type="number"
-                    step="any"
-                    placeholder="e.g. -74.0060"
-                    value={editCleanerData.location_lng}
-                    onChange={(e) => setEditCleanerData({
-                      ...editCleanerData,
-                      location_lng: e.target.value
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Range: -180 to 180
-                  </p>
-                </div>
-              </div>
-              <div className="bg-muted/50 p-3 rounded-md">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Tip:</strong> You can find coordinates by right-clicking a location on Google Maps and selecting the coordinates.
-                </p>
-              </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditCleanerOpen(false)}>
                   Cancel
