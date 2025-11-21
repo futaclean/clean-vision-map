@@ -698,6 +698,81 @@ const AdminDashboard = () => {
     setEditCleanerOpen(true);
   };
 
+  // Reverse geocoding function
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data.display_name) {
+        setEditCleanerData(prev => ({
+          ...prev,
+          location_address: data.display_name
+        }));
+      }
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Getting location...",
+      description: "Please allow location access in your browser",
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setEditCleanerData(prev => ({
+          ...prev,
+          location_lat: latitude.toFixed(6),
+          location_lng: longitude.toFixed(6)
+        }));
+        
+        // Get address for this location
+        await reverseGeocode(latitude, longitude);
+        
+        toast({
+          title: "Location set",
+          description: "Your current location has been set successfully",
+        });
+      },
+      (error) => {
+        let message = "Failed to get your location";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Location access denied. Please enable location permissions in your browser.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Location information is unavailable";
+        } else if (error.code === error.TIMEOUT) {
+          message = "Location request timed out";
+        }
+        
+        toast({
+          title: "Location error",
+          description: message,
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const handleUpdateCleanerLocation = async () => {
     if (!selectedCleaner) return;
 
@@ -2494,9 +2569,20 @@ const AdminDashboard = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="location_address" className="text-sm font-medium">
-                  Location Address
-                </label>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="location_address" className="text-sm font-medium">
+                    Location Address
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseCurrentLocation}
+                    type="button"
+                  >
+                    <Map className="h-3 w-3 mr-1" />
+                    Use Current Location
+                  </Button>
+                </div>
                 <Input
                   id="location_address"
                   placeholder="e.g. 123 Main St, City"
