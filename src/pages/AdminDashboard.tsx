@@ -1343,11 +1343,13 @@ const AdminDashboard = () => {
 
                       <div className="flex items-center gap-2">
                         <Select value={bulkCleaner} onValueChange={setBulkCleaner}>
-                          <SelectTrigger className="w-[150px] bg-background">
-                            <SelectValue placeholder="Assign cleaner" />
+                          <SelectTrigger className="w-[180px] bg-background">
+                            <SelectValue placeholder="Select cleaner" />
                           </SelectTrigger>
-                          <SelectContent className="bg-background">
-                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="unassigned">
+                              <span className="text-muted-foreground">Unassigned</span>
+                            </SelectItem>
                             {cleaners.map((cleaner) => (
                               <SelectItem key={cleaner.id} value={cleaner.id}>
                                 {cleaner.full_name}
@@ -1359,8 +1361,9 @@ const AdminDashboard = () => {
                           onClick={handleBulkCleanerAssignment}
                           disabled={!bulkCleaner}
                           size="sm"
+                          className="whitespace-nowrap"
                         >
-                          Assign
+                          Assign Cleaner
                         </Button>
                       </div>
 
@@ -1585,10 +1588,12 @@ const AdminDashboard = () => {
                                 onValueChange={(value) => handleAssignCleaner(report.id, value)}
                               >
                                 <SelectTrigger className="w-[150px]">
-                                  <SelectValue />
+                                  <SelectValue placeholder="Select cleaner" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                                <SelectContent className="bg-background z-50">
+                                  <SelectItem value="unassigned">
+                                    <span className="text-muted-foreground">Unassigned</span>
+                                  </SelectItem>
                                   {cleaners.map((cleaner) => (
                                     <SelectItem key={cleaner.id} value={cleaner.id}>
                                       {cleaner.full_name}
@@ -1613,7 +1618,7 @@ const AdminDashboard = () => {
                                   <SelectTrigger className="w-[120px]">
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent className="bg-background z-50">
                                     <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="in_progress">In Progress</SelectItem>
                                     <SelectItem value="resolved">Resolved</SelectItem>
