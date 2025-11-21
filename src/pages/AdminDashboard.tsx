@@ -2415,6 +2415,82 @@ const AdminDashboard = () => {
                     <p className="text-base">{selectedReport.description}</p>
                   </div>
                 )}
+
+                {/* Cleaner Distance Information */}
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">
+                    Available Cleaners (sorted by distance)
+                  </p>
+                  <div className="max-h-[200px] overflow-y-auto space-y-2">
+                    {cleaners
+                      .filter(c => c.location_lat != null && c.location_lng != null)
+                      .map(cleaner => {
+                        const distance = calculateDistance(
+                          selectedReport.location_lat,
+                          selectedReport.location_lng,
+                          cleaner.location_lat!,
+                          cleaner.location_lng!
+                        );
+                        const assignedCount = reports.filter(r => 
+                          r.assigned_to === cleaner.id && 
+                          r.status !== 'resolved' && 
+                          r.status !== 'rejected'
+                        ).length;
+                        return { ...cleaner, distance, assignedCount };
+                      })
+                      .sort((a, b) => a.distance - b.distance)
+                      .map((cleaner) => (
+                        <div 
+                          key={cleaner.id}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-lg border",
+                            selectedReport.assigned_to === cleaner.id 
+                              ? "bg-primary/10 border-primary" 
+                              : "bg-muted/30"
+                          )}
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {cleaner.full_name}
+                              {selectedReport.assigned_to === cleaner.id && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Currently Assigned
+                                </Badge>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {cleaner.location_address || 'Location set'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-sm font-bold">{cleaner.distance.toFixed(2)} km</p>
+                              <p className="text-xs text-muted-foreground">
+                                {cleaner.assignedCount} active {cleaner.assignedCount === 1 ? 'report' : 'reports'}
+                              </p>
+                            </div>
+                            {selectedReport.assigned_to !== cleaner.id && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  handleAssignCleaner(selectedReport.id, cleaner.id);
+                                  setReportDialogOpen(false);
+                                }}
+                              >
+                                Assign
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    {cleaners.filter(c => c.location_lat != null && c.location_lng != null).length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No cleaners have location data set. Please set cleaner locations to see distances.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </DialogContent>
