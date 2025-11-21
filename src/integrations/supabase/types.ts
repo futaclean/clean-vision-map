@@ -81,34 +81,46 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          current_lat: number | null
+          current_lng: number | null
           email: string
           full_name: string
           id: string
+          is_tracking_enabled: boolean | null
           location_address: string | null
           location_lat: number | null
           location_lng: number | null
+          location_updated_at: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          current_lat?: number | null
+          current_lng?: number | null
           email: string
           full_name: string
           id: string
+          is_tracking_enabled?: boolean | null
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          location_updated_at?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          current_lat?: number | null
+          current_lng?: number | null
           email?: string
           full_name?: string
           id?: string
+          is_tracking_enabled?: boolean | null
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          location_updated_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
