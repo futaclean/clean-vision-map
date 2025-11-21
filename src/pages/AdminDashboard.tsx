@@ -419,16 +419,20 @@ const AdminDashboard = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Cleaner created",
-        description: `${newCleanerName} has been added as a cleaner`,
-      });
-
+      // Close dialog and reset form
       setCreateCleanerOpen(false);
       setNewCleanerEmail("");
       setNewCleanerName("");
       setNewCleanerPassword("");
-      await fetchAllData();
+
+      // Wait a moment for database to update, then refresh
+      setTimeout(async () => {
+        await fetchAllData();
+        toast({
+          title: "Cleaner created",
+          description: `${newCleanerName} has been added as a cleaner`,
+        });
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Error creating cleaner",
