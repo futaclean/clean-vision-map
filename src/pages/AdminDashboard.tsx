@@ -21,6 +21,7 @@ import * as XLSX from 'xlsx';
 import { cn } from "@/lib/utils";
 import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { CleanersOverviewMap } from "@/components/CleanersOverviewMap";
+import { CleanerRouteOptimizer } from "@/components/CleanerRouteOptimizer";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -1471,6 +1472,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="map">Reports Map</TabsTrigger>
             <TabsTrigger value="cleaners-map">Cleaners Map</TabsTrigger>
+            <TabsTrigger value="route-planning">Route Planning</TabsTrigger>
             <TabsTrigger value="reports">Waste Reports</TabsTrigger>
             <TabsTrigger value="cleaners">Cleaners</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
@@ -1725,6 +1727,13 @@ const AdminDashboard = () => {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="route-planning" className="space-y-6">
+            <CleanerRouteOptimizer 
+              cleaners={cleaners}
+              reports={reports}
+            />
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
