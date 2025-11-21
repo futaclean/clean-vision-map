@@ -1,1 +1,16 @@
 project_id = "eptnavmuprfszcyflbne"
+
+[functions.create-cleaner]
+verify_jwt = true
+
+[functions.send-cleaner-notification]
+verify_jwt = false
+
+[functions.send-report-summary]
+verify_jwt = false
+
+[functions.send-status-notification]
+verify_jwt = false
+
+[functions.analyze-cleanup]
+verify_jwt = true
