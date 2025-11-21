@@ -987,7 +987,7 @@ const CleanerDashboard = () => {
                 </div>
               )}
 
-              {!afterImage && selectedReport.status !== 'resolved' && selectedReport.status !== 'rejected' && (
+              {!afterImage && selectedReport.status !== 'rejected' && (
                 <div className="flex gap-2 pt-4">
                   <Select
                     value={selectedReport.status}
