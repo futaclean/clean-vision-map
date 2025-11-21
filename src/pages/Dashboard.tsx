@@ -39,6 +39,8 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [wasteTypeFilter, setWasteTypeFilter] = useState<string>('all');
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const reportsPerPage = 5;
 
@@ -59,14 +61,12 @@ const Dashboard = () => {
     if (user) {
       fetchRecentReports();
     }
-  }, [user, currentPage, searchTerm]);
+  }, [user, currentPage, searchTerm, statusFilter, wasteTypeFilter]);
 
   useEffect(() => {
-    // Reset to page 1 when search term changes
-    if (searchTerm) {
-      setCurrentPage(1);
-    }
-  }, [searchTerm]);
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, wasteTypeFilter]);
 
   // Real-time subscription for waste reports
   useEffect(() => {
@@ -183,6 +183,16 @@ const Dashboard = () => {
         countQuery = countQuery.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        countQuery = countQuery.eq('status', statusFilter);
+      }
+
+      // Apply waste type filter
+      if (wasteTypeFilter !== 'all') {
+        countQuery = countQuery.eq('waste_type', wasteTypeFilter);
+      }
+
       const { count, error: countError } = await countQuery;
 
       if (countError) {
@@ -202,6 +212,16 @@ const Dashboard = () => {
       // Apply search filter to data if needed
       if (searchTerm.trim()) {
         dataQuery = dataQuery.or(`waste_type.ilike.%${searchTerm}%,location_address.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        dataQuery = dataQuery.eq('status', statusFilter);
+      }
+
+      // Apply waste type filter
+      if (wasteTypeFilter !== 'all') {
+        dataQuery = dataQuery.eq('waste_type', wasteTypeFilter);
       }
 
       const { data: reports, error: dataError } = await dataQuery
@@ -533,16 +553,74 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by waste type, location, or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            {/* Search and Filters */}
+            <div className="space-y-3 mt-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by waste type, location, or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Status Filter */}
+                <div>
+                  <Label className="text-sm mb-2 block">Filter by Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Waste Type Filter */}
+                <div>
+                  <Label className="text-sm mb-2 block">Filter by Waste Type</Label>
+                  <Select value={wasteTypeFilter} onValueChange={setWasteTypeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Waste Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Waste Types</SelectItem>
+                      <SelectItem value="Plastic">Plastic</SelectItem>
+                      <SelectItem value="Organic">Organic</SelectItem>
+                      <SelectItem value="Paper">Paper</SelectItem>
+                      <SelectItem value="Glass">Glass</SelectItem>
+                      <SelectItem value="Metal">Metal</SelectItem>
+                      <SelectItem value="Electronic">Electronic</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(statusFilter !== 'all' || wasteTypeFilter !== 'all' || searchTerm) && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setWasteTypeFilter('all');
+                    setSearchTerm('');
+                  }}
+                  className="w-full"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
