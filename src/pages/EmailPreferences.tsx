@@ -15,6 +15,7 @@ export default function EmailPreferences() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
   const [weeklyEnabled, setWeeklyEnabled] = useState(true);
   const [monthlyEnabled, setMonthlyEnabled] = useState(true);
 
@@ -88,6 +89,33 @@ export default function EmailPreferences() {
     }
   };
 
+  const sendTestEmail = async () => {
+    if (!user) return;
+
+    setSendingTest(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-report-summary", {
+        body: { test: true, userId: user.id },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test Email Sent",
+        description: "Check your inbox for the test summary email",
+      });
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send test email",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -157,13 +185,21 @@ export default function EmailPreferences() {
               </div>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t space-y-3">
               <Button
                 onClick={savePreferences}
                 disabled={saving}
                 className="w-full"
               >
                 {saving ? "Saving..." : "Save Preferences"}
+              </Button>
+              <Button
+                onClick={sendTestEmail}
+                disabled={sendingTest}
+                variant="outline"
+                className="w-full"
+              >
+                {sendingTest ? "Sending..." : "Send Test Email"}
               </Button>
             </div>
           </CardContent>

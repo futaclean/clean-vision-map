@@ -31,9 +31,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { frequency } = await req.json();
+    const { frequency, test, userId } = await req.json();
     
-    if (!frequency || (frequency !== "weekly" && frequency !== "monthly")) {
+    // Handle test email request
+    if (test && userId) {
+      return await handleTestEmail(userId);
+    }
+    
+    const { frequency: freq } = { frequency };
+    
+    if (!freq || (freq !== "weekly" && freq !== "monthly")) {
       throw new Error("Invalid frequency. Must be 'weekly' or 'monthly'");
     }
 
@@ -42,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Fetching all user profiles for ${frequency} summaries...`);
+    console.log(`Fetching all user profiles for ${freq} summaries...`);
 
     // Get all user profiles with email and preferences
     const { data: profiles, error: profilesError } = await supabase
@@ -67,12 +74,12 @@ const handler = async (req: Request): Promise<Response> => {
     for (const profile of profiles || []) {
       // Check if user has opted in for this frequency
       const prefs = profile.email_preferences?.[0];
-      const shouldSend = frequency === "weekly" 
+      const shouldSend = freq === "weekly" 
         ? prefs?.weekly_enabled !== false 
         : prefs?.monthly_enabled !== false;
 
       if (!shouldSend) {
-        console.log(`Skipping ${profile.email} - opted out of ${frequency} summaries`);
+        console.log(`Skipping ${profile.email} - opted out of ${freq} summaries`);
         continue;
       }
       const { data: reports, error: reportsError } = await supabase
@@ -124,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await resend.emails.send({
           from: "CleanFUTA <onboarding@resend.dev>",
           to: [summary.email],
-          subject: `Your CleanFUTA ${frequency === "weekly" ? "Weekly" : "Monthly"} Report Summary`,
+          subject: `Your CleanFUTA ${freq === "weekly" ? "Weekly" : "Monthly"} Report Summary`,
           html: emailHtml,
         });
 
@@ -289,6 +296,84 @@ function generateEmailHtml(summary: ReportSummary): string {
       </body>
     </html>
   `;
+}
+
+async function handleTestEmail(userId: string): Promise<Response> {
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  try {
+    // Get user profile
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error('Failed to fetch user profile');
+    }
+
+    // Get sample reports
+    const { data: reports, error: reportsError } = await supabaseAdmin
+      .from('waste_reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (reportsError) {
+      throw new Error('Failed to fetch reports');
+    }
+
+    const reportsArray = reports || [];
+    
+    const summary: ReportSummary = {
+      userId: userId,
+      fullName: profile.full_name,
+      email: profile.email,
+      totalReports: reportsArray.length,
+      pendingReports: reportsArray.filter(r => r.status === 'pending').length,
+      inProgressReports: reportsArray.filter(r => r.status === 'in_progress').length,
+      resolvedReports: reportsArray.filter(r => r.status === 'resolved').length,
+      recentReports: reportsArray.slice(0, 5).map(r => ({
+        wasteType: r.waste_type || "General Waste",
+        status: r.status,
+        createdAt: r.created_at,
+        locationAddress: r.location_address || "Location not specified",
+      })),
+    };
+
+    const emailHtml = generateEmailHtml(summary);
+
+    const emailResponse = await resend.emails.send({
+      from: "CleanFUTA <onboarding@resend.dev>",
+      to: [summary.email],
+      subject: "CleanFUTA Test Email - Your Report Summary",
+      html: emailHtml,
+    });
+
+    console.log('Test email sent successfully:', emailResponse);
+
+    return new Response(
+      JSON.stringify({ success: true, message: 'Test email sent' }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: any) {
+    console.error('Error sending test email:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
 }
 
 serve(handler);
