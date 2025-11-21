@@ -26,16 +26,38 @@ serve(async (req) => {
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('No authorization header found');
       throw new Error('No authorization header');
     }
 
-    // Verify the caller is an admin
+    // Verify the caller is an admin using the anon key client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    // Create a client with the user's token to verify auth
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader
+          }
+        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      console.error('User verification failed:', userError);
+      throw new Error('Unauthorized - Invalid user token');
     }
+
+    console.log('User authenticated:', user.id);
 
     // Check if user is admin
     const { data: roleData, error: roleError } = await supabaseAdmin
@@ -45,9 +67,17 @@ serve(async (req) => {
       .eq('role', 'admin')
       .single();
 
-    if (roleError || !roleData) {
+    if (roleError) {
+      console.error('Role check error:', roleError);
+      throw new Error('Error checking admin role');
+    }
+
+    if (!roleData) {
+      console.error('User is not an admin:', user.id);
       throw new Error('User is not an admin');
     }
+
+    console.log('Admin verified:', user.id);
 
     // Get request body
     const { email, password, full_name } = await req.json();
