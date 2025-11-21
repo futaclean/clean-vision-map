@@ -352,6 +352,13 @@ const AdminDashboard = () => {
             type: notification.type,
             related_report_id: reportId
           });
+
+          // Send email notification if resolved
+          if (newStatus === 'resolved') {
+            supabase.functions.invoke("send-status-notification", {
+              body: { reportId, status: newStatus },
+            }).catch(err => console.error("Email notification error:", err));
+          }
         }
       }
 
