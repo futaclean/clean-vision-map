@@ -207,6 +207,8 @@ const AdminDashboard = () => {
       // Filter cleaners from the roles data
       const cleanerIds = rolesData.data?.filter(r => r.role === 'cleaner').map(r => r.user_id) || [];
       const cleanerProfiles = profilesData.data?.filter(p => cleanerIds.includes(p.id)) || [];
+      console.log('Cleaner IDs:', cleanerIds);
+      console.log('Cleaner Profiles:', cleanerProfiles);
       setCleaners(cleanerProfiles);
     } catch (error: any) {
       toast({
@@ -1346,15 +1348,17 @@ const AdminDashboard = () => {
                           <SelectTrigger className="w-[180px] bg-background">
                             <SelectValue placeholder="Select cleaner" />
                           </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
+                          <SelectContent className="bg-background z-50" position="popper">
                             <SelectItem value="unassigned">
                               <span className="text-muted-foreground">Unassigned</span>
                             </SelectItem>
-                            {cleaners.map((cleaner) => (
+                            {cleaners.length > 0 ? cleaners.map((cleaner) => (
                               <SelectItem key={cleaner.id} value={cleaner.id}>
                                 {cleaner.full_name}
                               </SelectItem>
-                            ))}
+                            )) : (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading cleaners...</div>
+                            )}
                           </SelectContent>
                         </Select>
                         <Button 
@@ -1590,15 +1594,17 @@ const AdminDashboard = () => {
                                 <SelectTrigger className="w-[150px]">
                                   <SelectValue placeholder="Select cleaner" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-background z-50">
+                                <SelectContent className="bg-background z-50" position="popper">
                                   <SelectItem value="unassigned">
                                     <span className="text-muted-foreground">Unassigned</span>
                                   </SelectItem>
-                                  {cleaners.map((cleaner) => (
+                                  {cleaners.length > 0 ? cleaners.map((cleaner) => (
                                     <SelectItem key={cleaner.id} value={cleaner.id}>
                                       {cleaner.full_name}
                                     </SelectItem>
-                                  ))}
+                                  )) : (
+                                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading cleaners...</div>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </TableCell>
