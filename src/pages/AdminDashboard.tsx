@@ -26,7 +26,7 @@ import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { LocationPicker } from "@/components/LocationPicker";
-import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus } from "@/lib/constants";
+import { VALID_REPORT_STATUSES, isValidReportStatus, type ReportStatus, VALID_SEVERITY_LEVELS, isValidSeverity, getSeverityLabel, VALID_WASTE_TYPES } from "@/lib/constants";
 
 interface WasteReport {
   id: string;
@@ -1074,7 +1074,9 @@ const AdminDashboard = () => {
 
   const mapFilteredReports = reports.filter(report => {
     if (mapFilterStatus !== "all" && report.status !== mapFilterStatus) return false;
-    if (mapFilterSeverity !== "all" && report.severity !== mapFilterSeverity) return false;
+    if (mapFilterSeverity !== "all") {
+      if (!isValidSeverity(report.severity) || report.severity !== mapFilterSeverity) return false;
+    }
     if (mapFilterType !== "all" && report.waste_type !== mapFilterType) return false;
     return true;
   });
@@ -1095,7 +1097,8 @@ const AdminDashboard = () => {
       medium: "bg-yellow-600",
       high: "bg-red-600",
     };
-    return <Badge className={colors[severity] || "bg-gray-500"}>{severity}</Badge>;
+    const label = isValidSeverity(severity) ? getSeverityLabel(severity) : severity;
+    return <Badge className={colors[severity] || "bg-gray-500"}>{label}</Badge>;
   };
 
   const getUserName = (userId: string) => {
@@ -1697,9 +1700,11 @@ const AdminDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Severities</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      {VALID_SEVERITY_LEVELS.map((severity) => (
+                        <SelectItem key={severity} value={severity}>
+                          {getSeverityLabel(severity)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
@@ -1709,12 +1714,11 @@ const AdminDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="plastic">Plastic</SelectItem>
-                      <SelectItem value="paper">Paper</SelectItem>
-                      <SelectItem value="food">Food Waste</SelectItem>
-                      <SelectItem value="hazardous">Hazardous</SelectItem>
-                      <SelectItem value="mixed">Mixed</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {VALID_WASTE_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
