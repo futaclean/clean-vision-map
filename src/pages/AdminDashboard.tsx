@@ -207,8 +207,6 @@ const AdminDashboard = () => {
       // Filter cleaners from the roles data
       const cleanerIds = rolesData.data?.filter(r => r.role === 'cleaner').map(r => r.user_id) || [];
       const cleanerProfiles = profilesData.data?.filter(p => cleanerIds.includes(p.id)) || [];
-      console.log('Cleaner IDs:', cleanerIds);
-      console.log('Cleaner Profiles:', cleanerProfiles);
       setCleaners(cleanerProfiles);
     } catch (error: any) {
       toast({
