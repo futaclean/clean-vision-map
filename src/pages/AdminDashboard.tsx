@@ -86,6 +86,15 @@ const AdminDashboard = () => {
   // Cleaner search
   const [cleanerSearch, setCleanerSearch] = useState<string>("");
   
+  // Edit cleaner dialog
+  const [editCleanerOpen, setEditCleanerOpen] = useState(false);
+  const [selectedCleaner, setSelectedCleaner] = useState<Profile | null>(null);
+  const [editCleanerData, setEditCleanerData] = useState({
+    location_address: "",
+    location_lat: "",
+    location_lng: ""
+  });
+  
   // Create cleaner dialog
   const [createCleanerOpen, setCreateCleanerOpen] = useState(false);
   const [newCleanerEmail, setNewCleanerEmail] = useState("");
@@ -670,6 +679,119 @@ const AdminDashboard = () => {
     } catch (error: any) {
       toast({
         title: "Export failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditCleaner = (cleaner: Profile) => {
+    setSelectedCleaner(cleaner);
+    setEditCleanerData({
+      location_address: cleaner.location_address || "",
+      location_lat: cleaner.location_lat?.toString() || "",
+      location_lng: cleaner.location_lng?.toString() || ""
+    });
+    setEditCleanerOpen(true);
+  };
+
+  const handleUpdateCleanerLocation = async () => {
+    if (!selectedCleaner) return;
+
+    // Validate inputs
+    const address = editCleanerData.location_address.trim();
+    const latStr = editCleanerData.location_lat.trim();
+    const lngStr = editCleanerData.location_lng.trim();
+
+    // Check if at least address is provided
+    if (!address && !latStr && !lngStr) {
+      toast({
+        title: "Validation error",
+        description: "Please provide at least a location address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate coordinates if provided
+    let lat: number | null = null;
+    let lng: number | null = null;
+
+    if (latStr || lngStr) {
+      // Both lat and lng must be provided if one is provided
+      if (!latStr || !lngStr) {
+        toast({
+          title: "Validation error",
+          description: "Both latitude and longitude must be provided together",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      lat = parseFloat(latStr);
+      lng = parseFloat(lngStr);
+
+      // Validate coordinate ranges
+      if (isNaN(lat) || isNaN(lng)) {
+        toast({
+          title: "Validation error",
+          description: "Latitude and longitude must be valid numbers",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (lat < -90 || lat > 90) {
+        toast({
+          title: "Validation error",
+          description: "Latitude must be between -90 and 90",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (lng < -180 || lng > 180) {
+        toast({
+          title: "Validation error",
+          description: "Longitude must be between -180 and 180",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validate address length
+    if (address.length > 255) {
+      toast({
+        title: "Validation error",
+        description: "Address must be less than 255 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          location_address: address || null,
+          location_lat: lat,
+          location_lng: lng
+        })
+        .eq('id', selectedCleaner.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Location updated",
+        description: `Updated location for ${selectedCleaner.full_name}`,
+      });
+
+      setEditCleanerOpen(false);
+      await fetchAllData();
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
         description: error.message,
         variant: "destructive",
       });
@@ -1851,11 +1973,13 @@ const AdminDashboard = () => {
                           <TableRow>
                             <TableHead>Cleaner Name</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead className="text-center">Assigned</TableHead>
                             <TableHead className="text-center">In Progress</TableHead>
                             <TableHead className="text-center">Completed</TableHead>
                             <TableHead className="text-center">Completion Rate</TableHead>
                             <TableHead className="text-center">Status</TableHead>
+                            <TableHead className="text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1879,6 +2003,16 @@ const AdminDashboard = () => {
                               <TableRow key={cleaner.id}>
                                 <TableCell className="font-medium">{cleaner.full_name}</TableCell>
                                 <TableCell className="text-muted-foreground">{cleaner.email}</TableCell>
+                                <TableCell className="text-muted-foreground text-sm">
+                                  {cleaner.location_address ? (
+                                    <div className="flex items-center gap-1">
+                                      <Map className="h-3 w-3" />
+                                      <span className="truncate max-w-[200px]">{cleaner.location_address}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground italic">No location set</span>
+                                  )}
+                                </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="outline">{assignedReports.length}</Badge>
                                 </TableCell>
@@ -1911,6 +2045,16 @@ const AdminDashboard = () => {
                                   ) : (
                                     <Badge variant="outline">Available</Badge>
                                   )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditCleaner(cleaner)}
+                                    title="Edit cleaner location"
+                                  >
+                                    <Map className="h-4 w-4" />
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             );
@@ -2304,6 +2448,91 @@ const AdminDashboard = () => {
                 </Button>
                 <Button onClick={handleCreateCleaner}>
                   Create Cleaner
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Cleaner Location Dialog */}
+        <Dialog open={editCleanerOpen} onOpenChange={setEditCleanerOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Cleaner Location</DialogTitle>
+              <DialogDescription>
+                Set the location for {selectedCleaner?.full_name} to enable auto-assignment
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="location_address" className="text-sm font-medium">
+                  Location Address
+                </label>
+                <Input
+                  id="location_address"
+                  placeholder="e.g. 123 Main St, City"
+                  value={editCleanerData.location_address}
+                  onChange={(e) => setEditCleanerData({
+                    ...editCleanerData,
+                    location_address: e.target.value
+                  })}
+                  maxLength={255}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the cleaner's base location or work area
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="location_lat" className="text-sm font-medium">
+                    Latitude
+                  </label>
+                  <Input
+                    id="location_lat"
+                    type="number"
+                    step="any"
+                    placeholder="e.g. 40.7128"
+                    value={editCleanerData.location_lat}
+                    onChange={(e) => setEditCleanerData({
+                      ...editCleanerData,
+                      location_lat: e.target.value
+                    })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Range: -90 to 90
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="location_lng" className="text-sm font-medium">
+                    Longitude
+                  </label>
+                  <Input
+                    id="location_lng"
+                    type="number"
+                    step="any"
+                    placeholder="e.g. -74.0060"
+                    value={editCleanerData.location_lng}
+                    onChange={(e) => setEditCleanerData({
+                      ...editCleanerData,
+                      location_lng: e.target.value
+                    })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Range: -180 to 180
+                  </p>
+                </div>
+              </div>
+              <div className="bg-muted/50 p-3 rounded-md">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Tip:</strong> You can find coordinates by right-clicking a location on Google Maps and selecting the coordinates.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditCleanerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateCleanerLocation}>
+                  Update Location
                 </Button>
               </div>
             </div>
