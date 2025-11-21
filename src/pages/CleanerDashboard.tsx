@@ -268,6 +268,11 @@ const CleanerDashboard = () => {
 
       if (updateError) throw updateError;
 
+      // Send email notification
+      supabase.functions.invoke("send-status-notification", {
+        body: { reportId: selectedReport.id, status: "resolved" },
+      }).catch(err => console.error("Email notification error:", err));
+
       toast({
         title: "Work completed!",
         description: "Report marked as resolved with completion photo",
