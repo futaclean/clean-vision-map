@@ -2520,6 +2520,12 @@ const AdminDashboard = () => {
                       location_lng: lng.toFixed(6)
                     });
                   }}
+                  onAddressSelect={(address) => {
+                    setEditCleanerData({
+                      ...editCleanerData,
+                      location_address: address
+                    });
+                  }}
                 />
               ) : (
                 <div className="grid grid-cols-2 gap-4">
