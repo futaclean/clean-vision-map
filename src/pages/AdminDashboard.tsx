@@ -399,38 +399,37 @@ const AdminDashboard = () => {
     }
 
     try {
-      // Use Supabase admin to create user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newCleanerEmail,
-        password: newCleanerPassword,
-        options: {
-          data: {
-            full_name: newCleanerName
-          }
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Call edge function to create cleaner with proper permissions
+      const { data, error } = await supabase.functions.invoke('create-cleaner', {
+        body: {
+          email: newCleanerEmail,
+          password: newCleanerPassword,
+          full_name: newCleanerName
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (authData.user) {
-        // Assign cleaner role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert([{ user_id: authData.user.id, role: 'cleaner' }]);
+      toast({
+        title: "Cleaner created",
+        description: `${newCleanerName} has been added as a cleaner`,
+      });
 
-        if (roleError) throw roleError;
-
-        toast({
-          title: "Cleaner created",
-          description: `${newCleanerName} has been added as a cleaner`,
-        });
-
-        setCreateCleanerOpen(false);
-        setNewCleanerEmail("");
-        setNewCleanerName("");
-        setNewCleanerPassword("");
-        await fetchAllData();
-      }
+      setCreateCleanerOpen(false);
+      setNewCleanerEmail("");
+      setNewCleanerName("");
+      setNewCleanerPassword("");
+      await fetchAllData();
     } catch (error: any) {
       toast({
         title: "Error creating cleaner",
