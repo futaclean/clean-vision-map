@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import LocationMap from "@/components/LocationMap";
+import MapSkeleton from "@/components/MapSkeleton";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 
 const ReportWaste = () => {
@@ -451,15 +452,17 @@ const ReportWaste = () => {
                     )}
                   </Button>
                 </div>
-                {location && (
-                  <div className="mt-4">
+                <div className="mt-4">
+                  {location ? (
                     <LocationMap 
                       lat={location.lat} 
                       lng={location.lng} 
                       address={locationAddress}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <MapSkeleton />
+                  )}
+                </div>
               </div>
 
               {/* Waste Type */}
