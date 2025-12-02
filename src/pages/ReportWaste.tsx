@@ -13,6 +13,7 @@ import LocationMap from "@/components/LocationMap";
 import MapSkeleton from "@/components/MapSkeleton";
 import SubmissionProgress from "@/components/SubmissionProgress";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
+import { hapticSuccess, hapticError } from "@/lib/haptics";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -303,6 +304,9 @@ const ReportWaste = () => {
       // Step 3: Complete
       setSubmissionStep('complete');
       
+      // Trigger haptic feedback on mobile devices
+      hapticSuccess();
+      
       toast({
         title: "Report submitted successfully",
         description: "Thank you for helping keep FUTA clean!",
@@ -322,6 +326,10 @@ const ReportWaste = () => {
     } catch (error: any) {
       console.error("Error submitting report:", error);
       setSubmissionStep(null);
+      
+      // Trigger error haptic feedback
+      hapticError();
+      
       toast({
         title: "Error submitting report",
         description: error.message || "Please try again later",
