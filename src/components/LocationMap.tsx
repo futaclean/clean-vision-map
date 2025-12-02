@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -20,17 +19,6 @@ interface LocationMapProps {
   lat: number;
   lng: number;
   address?: string;
-}
-
-// Component to handle map centering when coordinates change
-function MapUpdater({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView([lat, lng], 16);
-  }, [lat, lng, map]);
-  
-  return null;
 }
 
 const LocationMap = ({ lat, lng, address }: LocationMapProps) => {
@@ -58,7 +46,6 @@ const LocationMap = ({ lat, lng, address }: LocationMapProps) => {
             </div>
           </Popup>
         </Marker>
-        <MapUpdater lat={lat} lng={lng} />
       </MapContainer>
     </div>
   );
