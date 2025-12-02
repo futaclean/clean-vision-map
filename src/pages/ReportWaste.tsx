@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import LocationMap from "@/components/LocationMap";
 import MapSkeleton from "@/components/MapSkeleton";
 import SubmissionProgress from "@/components/SubmissionProgress";
+import Confetti from "@/components/Confetti";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
 
@@ -27,6 +28,7 @@ const ReportWaste = () => {
   const [description, setDescription] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [submissionStep, setSubmissionStep] = useState<'location' | 'uploading' | 'saving' | 'complete' | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -308,7 +310,8 @@ const ReportWaste = () => {
       // Step 3: Complete
       setSubmissionStep('complete');
       
-      // Trigger haptic feedback on mobile devices
+      // Trigger confetti and haptic feedback
+      setShowConfetti(true);
       hapticSuccess();
       
       toast({
@@ -359,6 +362,9 @@ const ReportWaste = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Confetti Animation */}
+      <Confetti active={showConfetti} />
+      
       {/* Submission Progress Overlay */}
       <SubmissionProgress currentStep={submissionStep} />
       
