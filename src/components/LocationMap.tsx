@@ -37,6 +37,7 @@ const LocationMap = ({ lat, lng, address }: LocationMapProps) => {
   return (
     <div className="w-full h-64 rounded-lg overflow-hidden border border-border">
       <MapContainer
+        key={`${lat}-${lng}`}
         center={[lat, lng]}
         zoom={16}
         scrollWheelZoom={false}
