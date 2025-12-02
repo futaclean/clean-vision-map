@@ -13,7 +13,7 @@ import LocationMap from "@/components/LocationMap";
 import MapSkeleton from "@/components/MapSkeleton";
 import SubmissionProgress from "@/components/SubmissionProgress";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
-import { hapticSuccess, hapticError } from "@/lib/haptics";
+import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -113,6 +113,10 @@ const ReportWaste = () => {
           setLocationAddress(address);
           
           setGettingLocation(false);
+          
+          // Haptic feedback for successful location capture
+          hapticMedium();
+          
           toast({
             title: "Location captured",
             description: "Address obtained successfully",
@@ -459,7 +463,10 @@ const ReportWaste = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={captureLocation}
+                    onClick={() => {
+                      hapticLight();
+                      captureLocation();
+                    }}
                     disabled={gettingLocation}
                   >
                     {gettingLocation ? (
@@ -491,7 +498,10 @@ const ReportWaste = () => {
               {/* Waste Type */}
               <div className="space-y-2">
                 <Label htmlFor="waste-type">Waste Category *</Label>
-                <Select value={wasteType} onValueChange={setWasteType}>
+                <Select value={wasteType} onValueChange={(value) => {
+                  setWasteType(value);
+                  hapticLight();
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select waste type" />
                   </SelectTrigger>
