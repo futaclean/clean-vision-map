@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import LocationMap from "@/components/LocationMap";
 import MapSkeleton from "@/components/MapSkeleton";
+import SubmissionProgress from "@/components/SubmissionProgress";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 
 const ReportWaste = () => {
@@ -24,6 +25,7 @@ const ReportWaste = () => {
   const [wasteType, setWasteType] = useState("");
   const [description, setDescription] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [submissionStep, setSubmissionStep] = useState<'location' | 'uploading' | 'saving' | 'complete' | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -261,8 +263,11 @@ const ReportWaste = () => {
     setLoading(true);
 
     try {
-      // Upload image to storage with sanitized extension
-      const fileExt = imageFile.type.split('/')[1]; // Get extension from MIME type
+      // Step 1: Uploading image
+      setSubmissionStep('uploading');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for UX
+      
+      const fileExt = imageFile.type.split('/')[1];
       const sanitizedExt = fileExt === 'jpeg' ? 'jpg' : fileExt;
       const fileName = `${user!.id}/${Date.now()}.${sanitizedExt}`;
       
@@ -272,12 +277,14 @@ const ReportWaste = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL for the uploaded image
       const { data: { publicUrl } } = supabase.storage
         .from('waste-reports')
         .getPublicUrl(fileName);
 
-      // Insert report into database with trimmed description
+      // Step 2: Saving report
+      setSubmissionStep('saving');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for UX
+      
       const { error } = await supabase
         .from("waste_reports")
         .insert({
@@ -293,6 +300,9 @@ const ReportWaste = () => {
 
       if (error) throw error;
 
+      // Step 3: Complete
+      setSubmissionStep('complete');
+      
       toast({
         title: "Report submitted successfully",
         description: "Thank you for helping keep FUTA clean!",
@@ -304,12 +314,14 @@ const ReportWaste = () => {
       setWasteType("");
       setDescription("");
       
-      // Redirect to dashboard after a short delay
+      // Redirect to dashboard after showing success
       setTimeout(() => {
+        setSubmissionStep(null);
         navigate("/dashboard");
-      }, 1500);
+      }, 2000);
     } catch (error: any) {
       console.error("Error submitting report:", error);
+      setSubmissionStep(null);
       toast({
         title: "Error submitting report",
         description: error.message || "Please try again later",
@@ -335,6 +347,9 @@ const ReportWaste = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Submission Progress Overlay */}
+      <SubmissionProgress currentStep={submissionStep} />
+      
       {/* Header */}
       <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="container mx-auto px-4 py-4">
