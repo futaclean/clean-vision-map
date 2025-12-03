@@ -43,9 +43,9 @@ export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Default to a central location if no coordinates provided
-    const defaultLat = lat ?? 6.4541;
-    const defaultLng = lng ?? 3.3947;
+    // Default to FUTA (Federal University of Technology, Akure) campus
+    const defaultLat = lat ?? 7.3034;
+    const defaultLng = lng ?? 5.1375;
 
     // Initialize map
     const map = L.map(mapContainerRef.current).setView([defaultLat, defaultLng], 13);
