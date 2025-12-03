@@ -117,6 +117,88 @@ export const FUTA_LANDMARKS: FUTALandmark[] = [
   { name: "FUTA Freedom Park", lat: 7.3042, lng: 5.1388, radius: 60 },
   { name: "FUTA Botanical Garden", lat: 7.3055, lng: 5.1400, radius: 100 },
   { name: "FUTA Wildlife Park", lat: 7.3085, lng: 5.1410, radius: 150 },
+  
+  // Additional Hostel Blocks
+  { name: "FUTA Hall A Block 1", lat: 7.2998, lng: 5.1398, radius: 40 },
+  { name: "FUTA Hall A Block 2", lat: 7.3002, lng: 5.1402, radius: 40 },
+  { name: "FUTA Hall B Block 1", lat: 7.3003, lng: 5.1408, radius: 40 },
+  { name: "FUTA Hall B Block 2", lat: 7.3007, lng: 5.1412, radius: 40 },
+  { name: "FUTA Hall C Block 1", lat: 7.3008, lng: 5.1418, radius: 40 },
+  { name: "FUTA Hall C Block 2", lat: 7.3012, lng: 5.1422, radius: 40 },
+  { name: "FUTA Hall D Block 1", lat: 7.3013, lng: 5.1428, radius: 40 },
+  { name: "FUTA Hall D Block 2", lat: 7.3017, lng: 5.1432, radius: 40 },
+  { name: "FUTA Hall E Block 1", lat: 7.3018, lng: 5.1433, radius: 40 },
+  { name: "FUTA Hall E Block 2", lat: 7.3022, lng: 5.1437, radius: 40 },
+  
+  // More Department Buildings
+  { name: "FUTA Agricultural Engineering Department", lat: 7.3023, lng: 5.1383, radius: 60 },
+  { name: "FUTA Food Science Department", lat: 7.3027, lng: 5.1387, radius: 60 },
+  { name: "FUTA Crop Production Department", lat: 7.3020, lng: 5.1390, radius: 60 },
+  { name: "FUTA Animal Production Department", lat: 7.3022, lng: 5.1392, radius: 60 },
+  { name: "FUTA Fisheries Department", lat: 7.3024, lng: 5.1395, radius: 60 },
+  { name: "FUTA Forestry Department", lat: 7.3026, lng: 5.1398, radius: 60 },
+  { name: "FUTA Geology Department", lat: 7.3040, lng: 5.1392, radius: 60 },
+  { name: "FUTA Mining Engineering Department", lat: 7.3044, lng: 5.1395, radius: 60 },
+  { name: "FUTA Meteorology Department", lat: 7.3046, lng: 5.1398, radius: 60 },
+  { name: "FUTA Remote Sensing Department", lat: 7.3048, lng: 5.1392, radius: 60 },
+  { name: "FUTA Cyber Security Department", lat: 7.3056, lng: 5.1385, radius: 60 },
+  { name: "FUTA Information Technology Department", lat: 7.3050, lng: 5.1376, radius: 60 },
+  { name: "FUTA Statistics Department", lat: 7.3024, lng: 5.1356, radius: 60 },
+  { name: "FUTA Project Management Department", lat: 7.3033, lng: 5.1386, radius: 60 },
+  { name: "FUTA Entrepreneurship Department", lat: 7.3036, lng: 5.1390, radius: 60 },
+  { name: "FUTA Biomedical Technology Department", lat: 7.3050, lng: 5.1398, radius: 60 },
+  { name: "FUTA Environmental Health Department", lat: 7.3046, lng: 5.1393, radius: 60 },
+  
+  // Laboratories & Workshops
+  { name: "FUTA Engineering Workshop", lat: 7.3064, lng: 5.1348, radius: 60 },
+  { name: "FUTA Physics Laboratory", lat: 7.3029, lng: 5.1364, radius: 50 },
+  { name: "FUTA Chemistry Laboratory", lat: 7.3031, lng: 5.1366, radius: 50 },
+  { name: "FUTA Biology Laboratory", lat: 7.3032, lng: 5.1371, radius: 50 },
+  { name: "FUTA Computer Laboratory", lat: 7.3053, lng: 5.1383, radius: 50 },
+  { name: "FUTA Agricultural Workshop", lat: 7.3022, lng: 5.1380, radius: 50 },
+  { name: "FUTA Drawing Studio", lat: 7.3071, lng: 5.1346, radius: 50 },
+  
+  // Staff Quarters
+  { name: "FUTA Staff Quarters (Zone A)", lat: 7.3090, lng: 5.1350, radius: 100 },
+  { name: "FUTA Staff Quarters (Zone B)", lat: 7.3095, lng: 5.1360, radius: 100 },
+  { name: "FUTA Staff Quarters (Zone C)", lat: 7.3100, lng: 5.1370, radius: 100 },
+  { name: "FUTA VC Lodge", lat: 7.3098, lng: 5.1355, radius: 60 },
+  
+  // Student Hangout Spots
+  { name: "FUTA Night Class Area", lat: 7.3046, lng: 5.1370, radius: 50 },
+  { name: "FUTA Gazebo (SAAT)", lat: 7.3024, lng: 5.1382, radius: 40 },
+  { name: "FUTA Gazebo (SEET)", lat: 7.3061, lng: 5.1352, radius: 40 },
+  { name: "FUTA Gazebo (SOS)", lat: 7.3031, lng: 5.1367, radius: 40 },
+  { name: "FUTA Under Tree (Popular)", lat: 7.3038, lng: 5.1370, radius: 40 },
+  { name: "FUTA Buka Junction", lat: 7.3029, lng: 5.1378, radius: 50 },
+  { name: "FUTA Mama Put Area", lat: 7.3031, lng: 5.1382, radius: 50 },
+  
+  // Water & Utilities
+  { name: "FUTA Borehole (Main)", lat: 7.3035, lng: 5.1338, radius: 40 },
+  { name: "FUTA Water Tank", lat: 7.3037, lng: 5.1340, radius: 40 },
+  { name: "FUTA Generator House", lat: 7.3039, lng: 5.1342, radius: 40 },
+  { name: "FUTA Power Station", lat: 7.3041, lng: 5.1335, radius: 50 },
+  
+  // Security Posts
+  { name: "FUTA Security Post (South Gate)", lat: 7.2986, lng: 5.1377, radius: 30 },
+  { name: "FUTA Security Post (North Gate)", lat: 7.3104, lng: 5.1364, radius: 30 },
+  { name: "FUTA Security Post (Main Gate)", lat: 7.3033, lng: 5.1319, radius: 30 },
+  { name: "FUTA Security Office", lat: 7.3035, lng: 5.1335, radius: 40 },
+  
+  // ATM Points
+  { name: "FUTA ATM (GTBank)", lat: 7.3032, lng: 5.1355, radius: 20 },
+  { name: "FUTA ATM (First Bank)", lat: 7.3034, lng: 5.1359, radius: 20 },
+  { name: "FUTA ATM (Hostel Area)", lat: 7.3006, lng: 5.1412, radius: 20 },
+  
+  // Printing & Business Centres
+  { name: "FUTA Business Centre (Main)", lat: 7.3036, lng: 5.1364, radius: 40 },
+  { name: "FUTA Printing Press", lat: 7.3038, lng: 5.1366, radius: 40 },
+  { name: "FUTA Photocopy Centre", lat: 7.3040, lng: 5.1368, radius: 40 },
+  
+  // Exam Halls
+  { name: "FUTA CBT Centre", lat: 7.3055, lng: 5.1375, radius: 60 },
+  { name: "FUTA Exam Hall (SEET)", lat: 7.3062, lng: 5.1354, radius: 60 },
+  { name: "FUTA Exam Hall (SOS)", lat: 7.3029, lng: 5.1363, radius: 60 },
 ];
 
 // Calculate distance between two coordinates in meters (Haversine formula)
