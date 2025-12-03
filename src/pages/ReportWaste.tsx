@@ -15,6 +15,7 @@ import SubmissionProgress from "@/components/SubmissionProgress";
 import Confetti from "@/components/Confetti";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
+import { getFUTALocationName } from "@/lib/futaLocations";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -41,11 +42,18 @@ const ReportWaste = () => {
     captureLocation();
   }, []);
 
-  const reverseGeocode = async (lat: number, lng: number) => {
+  const getLocationAddress = async (lat: number, lng: number) => {
     try {
-      console.log('Starting reverse geocoding for:', lat, lng);
+      console.log('Getting location address for:', lat, lng);
       
-      // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
+      // First, check if we're near a known FUTA landmark
+      const futaLocation = getFUTALocationName(lat, lng);
+      if (futaLocation) {
+        console.log('FUTA landmark found:', futaLocation);
+        return futaLocation;
+      }
+      
+      // Fallback to OpenStreetMap Nominatim for reverse geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
         {
@@ -65,18 +73,15 @@ const ReportWaste = () => {
       console.log('Geocoding data received:', data);
       
       // Format a readable address from the response
-      // Extract meaningful location parts: road, building, suburb, etc.
       const addr = data.address || {};
       const parts = [];
       
-      // Add specific location markers in order of importance
       if (addr.building) parts.push(addr.building);
       if (addr.road) parts.push(addr.road);
       if (addr.suburb || addr.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
       if (addr.university) parts.push(addr.university);
       if (addr.city || addr.town) parts.push(addr.city || addr.town);
       
-      // If we have specific parts, use them; otherwise fall back to display_name
       const address = parts.length > 0 
         ? parts.join(', ')
         : data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -85,7 +90,6 @@ const ReportWaste = () => {
       return address;
     } catch (error) {
       console.error("Reverse geocoding error:", error);
-      // Fallback to coordinates if geocoding fails
       return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
   };
@@ -110,8 +114,8 @@ const ReportWaste = () => {
             description: "Converting GPS to readable address",
           });
           
-          // Fetch the readable address in the background
-          const address = await reverseGeocode(latitude, longitude);
+          // Fetch the readable address in the background (prioritizes FUTA landmarks)
+          const address = await getLocationAddress(latitude, longitude);
           setLocationAddress(address);
           
           setGettingLocation(false);

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getFUTALocationName } from '@/lib/futaLocations';
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -22,10 +23,18 @@ export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: 
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  // Reverse geocoding function using Nominatim
-  const reverseGeocode = async (latitude: number, longitude: number) => {
+  // Get location name - prioritize FUTA landmarks, fallback to reverse geocoding
+  const getLocationName = async (latitude: number, longitude: number) => {
     if (!onAddressSelect) return;
     
+    // First, check if we're near a known FUTA landmark
+    const futaLocation = getFUTALocationName(latitude, longitude);
+    if (futaLocation) {
+      onAddressSelect(futaLocation);
+      return;
+    }
+    
+    // Fallback to reverse geocoding for locations outside FUTA
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
@@ -69,7 +78,7 @@ export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: 
       marker.on('dragend', () => {
         const position = marker.getLatLng();
         onLocationSelect(position.lat, position.lng);
-        reverseGeocode(position.lat, position.lng);
+        getLocationName(position.lat, position.lng);
       });
     }
 
@@ -92,12 +101,12 @@ export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: 
         marker.on('dragend', () => {
           const position = marker.getLatLng();
           onLocationSelect(position.lat, position.lng);
-          reverseGeocode(position.lat, position.lng);
+          getLocationName(position.lat, position.lng);
         });
       }
 
       onLocationSelect(newLat, newLng);
-      reverseGeocode(newLat, newLng);
+      getLocationName(newLat, newLng);
     });
 
     return () => {
@@ -123,7 +132,7 @@ export const LocationPicker = ({ lat, lng, onLocationSelect, onAddressSelect }: 
         marker.on('dragend', () => {
           const position = marker.getLatLng();
           onLocationSelect(position.lat, position.lng);
-          reverseGeocode(position.lat, position.lng);
+          getLocationName(position.lat, position.lng);
         });
       }
       mapRef.current.setView([lat, lng], 13);
