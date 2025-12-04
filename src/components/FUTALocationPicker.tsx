@@ -16,10 +16,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FUTA_LANDMARKS, FUTALandmark } from "@/lib/futaLocations";
+import LandmarkSuggestionForm from "./LandmarkSuggestionForm";
 
 interface FUTALocationPickerProps {
   value: string;
   onSelect: (landmark: FUTALandmark) => void;
+  currentLat?: number;
+  currentLng?: number;
 }
 
 // Group landmarks by category
@@ -66,7 +69,7 @@ const sortedCategories = [
   "Other"
 ].filter(cat => groupedLandmarks[cat]?.length > 0);
 
-export function FUTALocationPicker({ value, onSelect }: FUTALocationPickerProps) {
+export function FUTALocationPicker({ value, onSelect, currentLat, currentLng }: FUTALocationPickerProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -90,70 +93,87 @@ export function FUTALocationPicker({ value, onSelect }: FUTALocationPickerProps)
   const hasResults = Object.keys(filteredLandmarks).length > 0;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
-        >
-          <div className="flex items-center gap-2 truncate">
-            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className={cn("truncate", !value && "text-muted-foreground")}>
-              {value || "Select FUTA building manually..."}
-            </span>
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 z-50 bg-popover" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Search FUTA buildings..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          <CommandList className="max-h-[300px]">
-            {!hasResults && (
-              <CommandEmpty>No building found.</CommandEmpty>
-            )}
-            {sortedCategories.map((category) => {
-              const landmarks = filteredLandmarks[category];
-              if (!landmarks?.length) return null;
-              
-              return (
-                <CommandGroup key={category} heading={category}>
-                  {landmarks.map((landmark) => (
-                    <CommandItem
-                      key={landmark.name}
-                      value={landmark.name}
-                      onSelect={() => {
-                        onSelect(landmark);
-                        setOpen(false);
-                        setSearchQuery("");
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === landmark.name ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <MapPin className="mr-2 h-3 w-3 text-muted-foreground" />
-                      <span className="truncate">
-                        {landmark.name.replace("FUTA ", "")}
-                      </span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              );
-            })}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className={cn("truncate", !value && "text-muted-foreground")}>
+                {value || "Select FUTA building manually..."}
+              </span>
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 z-50 bg-popover" align="start">
+          <Command shouldFilter={false}>
+            <CommandInput 
+              placeholder="Search FUTA buildings..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+            <CommandList className="max-h-[300px]">
+              {!hasResults && (
+                <CommandEmpty>
+                  <div className="py-2 text-center">
+                    <p className="text-sm text-muted-foreground mb-3">No building found.</p>
+                    <LandmarkSuggestionForm 
+                      currentLat={currentLat} 
+                      currentLng={currentLng}
+                    />
+                  </div>
+                </CommandEmpty>
+              )}
+              {sortedCategories.map((category) => {
+                const landmarks = filteredLandmarks[category];
+                if (!landmarks?.length) return null;
+                
+                return (
+                  <CommandGroup key={category} heading={category}>
+                    {landmarks.map((landmark) => (
+                      <CommandItem
+                        key={landmark.name}
+                        value={landmark.name}
+                        onSelect={() => {
+                          onSelect(landmark);
+                          setOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === landmark.name ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <MapPin className="mr-2 h-3 w-3 text-muted-foreground" />
+                        <span className="truncate">
+                          {landmark.name.replace("FUTA ", "")}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                );
+              })}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      
+      <div className="flex justify-end">
+        <LandmarkSuggestionForm 
+          currentLat={currentLat} 
+          currentLng={currentLng}
+        />
+      </div>
+    </div>
   );
 }
 

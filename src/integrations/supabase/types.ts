@@ -41,6 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      landmark_suggestions: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          lat: number
+          lng: number
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
