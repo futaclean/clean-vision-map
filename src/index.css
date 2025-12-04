@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,94 +11,99 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 140 40% 15%;
+    --foreground: 160 30% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 140 40% 15%;
+    --card-foreground: 160 30% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 140 40% 15%;
+    --popover-foreground: 160 30% 10%;
 
-    --primary: 142 76% 36%;
+    --primary: 152 82% 38%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 152 82% 50%;
 
-    --secondary: 142 35% 88%;
-    --secondary-foreground: 140 40% 15%;
+    --secondary: 152 30% 92%;
+    --secondary-foreground: 160 30% 10%;
 
-    --muted: 142 20% 95%;
-    --muted-foreground: 140 15% 45%;
+    --muted: 160 15% 96%;
+    --muted-foreground: 160 10% 45%;
 
-    --accent: 142 50% 50%;
+    --accent: 152 70% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 142 25% 88%;
-    --input: 142 25% 88%;
-    --ring: 142 76% 36%;
+    --border: 160 20% 90%;
+    --input: 160 20% 90%;
+    --ring: 152 82% 38%;
 
     --radius: 0.75rem;
     
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 65% 45%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(142 76% 36%) 0%, hsl(142 60% 25%) 100%);
-    --gradient-card: linear-gradient(135deg, hsla(142 76% 36% / 0.05) 0%, hsla(142 65% 45% / 0.1) 100%);
+    /* Premium gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(152 82% 38%) 0%, hsl(160 75% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(152 82% 32%) 0%, hsl(170 70% 22%) 50%, hsl(180 60% 18%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(152 82% 38% / 0.03) 0%, hsla(160 75% 45% / 0.08) 100%);
+    --gradient-glass: linear-gradient(135deg, hsla(0 0% 100% / 0.9) 0%, hsla(0 0% 100% / 0.7) 100%);
+    --gradient-shine: linear-gradient(90deg, transparent, hsla(0 0% 100% / 0.4), transparent);
     
-    --shadow-glow: 0 8px 32px hsla(142 76% 36% / 0.2);
-    --shadow-card: 0 4px 20px hsla(142 40% 20% / 0.08);
+    /* Premium shadows */
+    --shadow-glow: 0 8px 40px hsla(152 82% 38% / 0.25);
+    --shadow-card: 0 4px 24px hsla(160 30% 20% / 0.06);
+    --shadow-elevated: 0 20px 60px hsla(160 30% 20% / 0.12);
+    --shadow-button: 0 4px 14px hsla(152 82% 38% / 0.35);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 140 30% 8%;
-    --foreground: 142 20% 95%;
+    --background: 160 25% 6%;
+    --foreground: 152 15% 95%;
 
-    --card: 140 25% 12%;
-    --card-foreground: 142 20% 95%;
+    --card: 160 20% 10%;
+    --card-foreground: 152 15% 95%;
 
-    --popover: 140 25% 12%;
-    --popover-foreground: 142 20% 95%;
+    --popover: 160 20% 10%;
+    --popover-foreground: 152 15% 95%;
 
-    --primary: 142 70% 45%;
+    --primary: 152 75% 45%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 152 75% 55%;
 
-    --secondary: 140 20% 20%;
-    --secondary-foreground: 142 20% 95%;
+    --secondary: 160 15% 18%;
+    --secondary-foreground: 152 15% 95%;
 
-    --muted: 140 20% 20%;
-    --muted-foreground: 142 15% 60%;
+    --muted: 160 15% 18%;
+    --muted-foreground: 152 10% 55%;
 
-    --accent: 142 70% 45%;
+    --accent: 152 75% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 140 20% 20%;
-    --input: 140 20% 20%;
-    --ring: 142 70% 45%;
+    --border: 160 15% 18%;
+    --input: 160 15% 18%;
+    --ring: 152 75% 45%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(142 70% 35%) 0%, hsl(142 60% 45%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(142 70% 35%) 0%, hsl(140 40% 15%) 100%);
-    --gradient-card: linear-gradient(135deg, hsla(142 70% 45% / 0.1) 0%, hsla(142 60% 35% / 0.15) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(152 75% 35%) 0%, hsl(160 70% 42%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(152 75% 28%) 0%, hsl(170 60% 15%) 50%, hsl(180 50% 10%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(152 75% 45% / 0.08) 0%, hsla(160 70% 35% / 0.12) 100%);
+    --gradient-glass: linear-gradient(135deg, hsla(160 20% 12% / 0.9) 0%, hsla(160 20% 8% / 0.7) 100%);
     
-    --shadow-glow: 0 8px 32px hsla(142 70% 45% / 0.3);
-    --shadow-card: 0 4px 20px hsla(0 0% 0% / 0.3);
+    --shadow-glow: 0 8px 40px hsla(152 75% 45% / 0.3);
+    --shadow-card: 0 4px 24px hsla(0 0% 0% / 0.3);
+    --shadow-elevated: 0 20px 60px hsla(0 0% 0% / 0.4);
+    --shadow-button: 0 4px 14px hsla(152 75% 45% / 0.4);
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -114,6 +121,37 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-xl border border-white/20 shadow-elevated;
+    background: var(--gradient-glass);
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+  
+  .hero-glow {
+    @apply absolute rounded-full blur-3xl opacity-30;
+    background: radial-gradient(circle, hsl(var(--primary-glow)) 0%, transparent 70%);
+  }
+}
+
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(5deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsla(152, 82%, 38%, 0.3); }
+  50% { box-shadow: 0 0 40px hsla(152, 82%, 38%, 0.6); }
 }
