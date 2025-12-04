@@ -13,9 +13,10 @@ import LocationMap from "@/components/LocationMap";
 import MapSkeleton from "@/components/MapSkeleton";
 import SubmissionProgress from "@/components/SubmissionProgress";
 import Confetti from "@/components/Confetti";
+import FUTALocationPicker from "@/components/FUTALocationPicker";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
-import { getFUTALocationName } from "@/lib/futaLocations";
+import { getFUTALocationName, FUTALandmark } from "@/lib/futaLocations";
 
 const ReportWaste = () => {
   const { user, loading: authLoading } = useAuth();
@@ -492,6 +493,26 @@ const ReportWaste = () => {
                     )}
                   </Button>
                 </div>
+                
+                {/* Manual FUTA Location Picker */}
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    GPS not accurate? Select your exact building:
+                  </p>
+                  <FUTALocationPicker 
+                    value={locationAddress}
+                    onSelect={(landmark: FUTALandmark) => {
+                      setLocation({ lat: landmark.lat, lng: landmark.lng });
+                      setLocationAddress(landmark.name);
+                      hapticMedium();
+                      toast({
+                        title: "Location updated",
+                        description: `Set to ${landmark.name}`,
+                      });
+                    }}
+                  />
+                </div>
+                
                 <div className="mt-4">
                   {location ? (
                     <LocationMap 
