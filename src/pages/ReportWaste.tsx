@@ -501,6 +501,8 @@ const ReportWaste = () => {
                   </p>
                   <FUTALocationPicker 
                     value={locationAddress}
+                    currentLat={location?.lat}
+                    currentLng={location?.lng}
                     onSelect={(landmark: FUTALandmark) => {
                       setLocation({ lat: landmark.lat, lng: landmark.lng });
                       setLocationAddress(landmark.name);
