@@ -1,19 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
-// Fix for default marker icon
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
-
-const DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
+import { getCategoryIcon, getCategoryFromName, getDefaultIcon } from "@/lib/markerIcons";
 
 interface LocationMapContentProps {
   lat: number;
@@ -22,8 +9,17 @@ interface LocationMapContentProps {
 }
 
 const LocationMapContent = ({ lat, lng, address }: LocationMapContentProps) => {
+  const category = address ? getCategoryFromName(address) : "default";
+  const icon = address ? getCategoryIcon(category) : getDefaultIcon();
+
   return (
     <div className="w-full h-64 rounded-lg overflow-hidden border border-border">
+      <style>{`
+        .custom-marker-icon {
+          background: transparent;
+          border: none;
+        }
+      `}</style>
       <MapContainer
         key={`${lat}-${lng}`}
         center={[lat, lng]}
@@ -35,7 +31,7 @@ const LocationMapContent = ({ lat, lng, address }: LocationMapContentProps) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[lat, lng]}>
+        <Marker position={[lat, lng]} icon={icon}>
           <Popup>
             <div className="text-sm">
               <p className="font-semibold">{address || "Waste Location"}</p>
