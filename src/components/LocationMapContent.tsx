@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -38,13 +38,17 @@ const LocationMapContent = ({ lat, lng, address }: LocationMapContentProps) => {
         <Marker position={[lat, lng]}>
           <Popup>
             <div className="text-sm">
-              <p className="font-semibold">Waste Location</p>
-              {address && <p className="text-muted-foreground">{address}</p>}
+              <p className="font-semibold">{address || "Waste Location"}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {lat.toFixed(6)}, {lng.toFixed(6)}
               </p>
             </div>
           </Popup>
+          {address && (
+            <Tooltip permanent direction="top" offset={[0, -35]}>
+              <span className="font-semibold text-xs">{address}</span>
+            </Tooltip>
+          )}
         </Marker>
       </MapContainer>
     </div>
