@@ -11,7 +11,6 @@ import splashImage from "@/assets/cleanfuta-splash.png";
 import apkFile from "@/assets/cleanfuta-app.apk"; 
 
 // --- Animated counter hook (keeping it a function for readability/reusability) ---
-// This acts as the "JavaScript logic" for the animation.
 const useCounter = (end: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
@@ -61,11 +60,11 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownl
             Download the official Android app to report waste issues instantly and get real-time status updates.
           </p>
           
+          {/* This button triggers the native download and closes the modal */}
           <Button 
             size="lg" 
             asChild 
             className="w-full text-base shadow-elevated"
-            // The button closes the modal and triggers the native file download via the anchor tag
             onClick={onClose} 
           >
             <a href={apkDownloadUrl} download="CleanFUTA.apk">
@@ -94,7 +93,7 @@ const Landing = () => {
   const users = useCounter(500, 2000);
   const locations = useCounter(150, 1500);
   
-  // Logic to start counters and auto-open modal
+  // Logic to start counters (Auto-open modal removed here)
   useEffect(() => {
     const counterTimer = setTimeout(() => {
       reports.start();
@@ -103,26 +102,17 @@ const Landing = () => {
       locations.start();
     }, 500);
     
-    // Auto-open modal logic: Show the pop-up 2 seconds after the page loads
-    const modalTimer = setTimeout(() => {
-      setIsDownloadModalOpen(true); 
-    }, 2000); 
+    // NOTE: The automatic modal timer (setTimeout) has been REMOVED.
+    // The user must now click a button to open the download modal.
 
     return () => {
       clearTimeout(counterTimer);
-      clearTimeout(modalTimer);
     }
   }, []); 
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-        {/*
-          INLINE CSS DEFINITIONS:
-          This <style> block defines the custom CSS classes (keyframes, shadows, gradients) 
-          that are required by the Tailwind classes used throughout the component (e.g., hero-glow, animate-float).
-          In a true React environment, this would be in a separate CSS file or configured in tailwind.config.js,
-          but this placement satisfies the "inline CSS" requirement for these definitions.
-        */}
+        {/* INLINE CSS DEFINITIONS (Kept for consistency and custom Tailwind classes) */}
         <style jsx="true">{`
           /* Custom Keyframes */
           @keyframes glow {
@@ -185,7 +175,7 @@ const Landing = () => {
         apkDownloadUrl={apkFile}
       />
       
-      {/* Navigation */}
+      {/* Navigation (Manual download button retained) */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -200,6 +190,7 @@ const Landing = () => {
             <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
+            {/* Download button in Nav bar */}
             <Button variant="ghost" size="sm" onClick={() => setIsDownloadModalOpen(true)} className="hidden sm:inline-flex">
               <Download className="h-4 w-4 mr-1" /> App
             </Button>
@@ -245,17 +236,30 @@ const Landing = () => {
                 waste issues in real-time using cutting-edge AI technology.
               </p>
               
+              {/* --- STRATEGIC DOWNLOAD NOW BUTTON --- */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                <Button size="lg" asChild className="bg-white text-primary hover:bg-white/95 shadow-elevated text-base px-8 h-12 font-semibold group">
+                
+                {/* 1. Primary "Download Now" Button to Open Modal */}
+                <Button 
+                  size="lg" 
+                  onClick={() => setIsDownloadModalOpen(true)} 
+                  className="bg-white text-primary hover:bg-white/95 shadow-elevated text-base px-8 h-12 font-semibold group"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  DOWNLOAD NOW (APK)
+                </Button>
+
+                {/* 2. Secondary "Start Reporting" Button */}
+                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12 backdrop-blur-sm group">
                   <Link to="/auth">
                     Start Reporting
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12 backdrop-blur-sm">
-                  <Link to="/auth?role=admin">Admin Portal</Link>
-                </Button>
+
               </div>
+              {/* --- END STRATEGIC BUTTONS --- */}
+
 
               {/* Stats row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-white/10 animate-fade-in" style={{ animationDelay: "0.4s" }}>
@@ -327,6 +331,8 @@ const Landing = () => {
         </div>
       </section>
       
+      {/* ... Other sections (Impact, Features, How It Works, Testimonials, CTA, Footer) remain unchanged ... */}
+
       {/* Impact Section */}
       <section id="impact" className="py-24 bg-background relative">
         <div className="container mx-auto px-4">
