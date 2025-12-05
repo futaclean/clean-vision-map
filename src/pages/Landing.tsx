@@ -6,11 +6,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+// Assuming these imports are correct in your project setup
 import splashImage from "@/assets/cleanfuta-splash.png";
-// Assuming you add your APK file to the assets directory
 import apkFile from "@/assets/cleanfuta-app.apk"; 
 
-// --- New Component: DownloadModal ---
+// --- Component: DownloadModal (for APK Download) ---
 interface DownloadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,7 +41,8 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownl
             size="lg" 
             asChild 
             className="w-full text-base shadow-elevated"
-            onClick={onClose} // Close the modal on click
+            // Use an anchor tag for download and close the modal immediately
+            onClick={onClose} 
           >
             {/* The anchor tag triggers the download */}
             <a href={apkDownloadUrl} download="CleanFUTA.apk">
@@ -51,17 +52,15 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownl
           </Button>
 
           <p className="text-xs text-muted-foreground mt-4">
-            (For Android devices only. iOS coming soon!)
+            (For Android devices only. For an iOS-like experience, use your browser's "Add to Home Screen" feature.)
           </p>
         </div>
       </div>
     </div>
   );
 };
-// --- End New Component: DownloadModal ---
 
-
-// Animated counter hook (Unchanged)
+// --- Animated counter hook (Used in Hero section) ---
 const useCounter = (end: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
@@ -82,38 +81,46 @@ const useCounter = (end: number, duration: number = 2000) => {
   return { count, start: () => setStarted(true) };
 };
 
+// --- Main Landing Component ---
 const Landing = () => {
-  // New state for controlling the download popup
+  // State for controlling the download popup
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   
+  // Counters initialization
   const reports = useCounter(2500, 2500);
   const cleaned = useCounter(1800, 2500);
   const users = useCounter(500, 2000);
   const locations = useCounter(150, 1500);
   
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Start counters
+    const counterTimer = setTimeout(() => {
       reports.start();
       cleaned.start();
       users.start();
       locations.start();
-      // Logic to open the modal after a delay, e.g., 2 seconds
+    }, 500);
+    
+    // Auto-open modal logic (moved from the duplicate code block)
+    const modalTimer = setTimeout(() => {
       setIsDownloadModalOpen(true); 
-    }, 2000); // 2000ms = 2 seconds after page load
+    }, 2000); // Opens 2 seconds after page load
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(counterTimer);
+      clearTimeout(modalTimer);
+    }
   }, []); // Empty dependency array ensures it runs once on mount
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       
-      {/* 1. New Download Modal Component */}
+      {/* Download Modal Component (Will auto-open and can be triggered by nav button) */}
       <DownloadModal 
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
-        apkDownloadUrl={apkFile} // Use the imported APK file path
+        apkDownloadUrl={apkFile} // Passes the imported path
       />
-      {/* ---------------------------------- */}
       
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
@@ -130,7 +137,7 @@ const Landing = () => {
             <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
-            {/* 2. Added Download Button to Nav (Optional, but useful) */}
+            {/* Added Download Button to Nav to manually trigger the modal */}
             <Button variant="ghost" size="sm" onClick={() => setIsDownloadModalOpen(true)} className="hidden sm:inline-flex">
               <Download className="h-4 w-4 mr-1" /> App
             </Button>
@@ -144,127 +151,13 @@ const Landing = () => {
           </div>
         </div>
       </nav>
-
-      {/* Hero Section (Content Unchanged) */}
-      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* ... (Hero content remains the same) */}
-      </section>
-
-      {/* Impact Section (Content Unchanged) */}
-      <section id="impact" className="py-24 bg-background relative">
-        {/* ... (Impact content remains the same) */}
-      </section>
-
-      {/* Features Section (Content Unchanged) */}
-      <section id="features" className="py-24 bg-muted/30 relative overflow-hidden">
-        {/* ... (Features content remains the same) */}
-      </section>
-
-      {/* How It Works (Content Unchanged) */}
-      <section id="how-it-works" className="py-24 bg-background">
-        {/* ... (How It Works content remains the same) */}
-      </section>
-
-      {/* Testimonials / Social Proof (Content Unchanged) */}
-      <section className="py-24 bg-gradient-hero relative overflow-hidden">
-        {/* ... (Testimonials content remains the same) */}
-      </section>
-
-      {/* CTA Section (Content Unchanged) */}
-      <section className="py-24 bg-background">
-        {/* ... (CTA content remains the same) */}
-      </section>
-
-      {/* Footer (Content Unchanged) */}
-      <footer className="bg-card border-t border-border py-12">
-        {/* ... (Footer content remains the same) */}
-      </footer>
-    </div>
-  );
-};
-
-export default Landing;import { Button } from "@/components/ui/button";
-import { 
-  MapPin, Leaf, Camera, BarChart3, Users, Shield, 
-  ArrowRight, ChevronRight, Globe, Zap, Target, 
-  CheckCircle2, Sparkles, TrendingUp, Award
-} from "lucide-react";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import splashImage from "@/assets/cleanfuta-splash.png";
-
-// Animated counter hook
-const useCounter = (end: number, duration: number = 2000) => {
-  const [count, setCount] = useState(0);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    if (!started) return;
-    
-    let startTime: number | null = null;
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const progress = Math.min((currentTime - startTime) / duration, 1);
-      setCount(Math.floor(progress * end));
-      if (progress < 1) requestAnimationFrame(animate);
-    };
-    requestAnimationFrame(animate);
-  }, [end, duration, started]);
-
-  return { count, start: () => setStarted(true) };
-};
-
-const Landing = () => {
-  const reports = useCounter(2500, 2500);
-  const cleaned = useCounter(1800, 2500);
-  const users = useCounter(500, 2000);
-  const locations = useCounter(150, 1500);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      reports.start();
-      cleaned.start();
-      users.start();
-      locations.start();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
-              <Leaf className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-display font-bold text-foreground">CleanFUTA</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-            <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/auth">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild className="shadow-button">
-              <Link to="/auth">Get Started</Link>
-            </Button>
-          </div>
-        </div>
-      </nav>
-
+      
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Background elements */}
+        {/* Background elements (kept original styles) */}
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="hero-glow w-[800px] h-[800px] -top-40 -right-40" />
         <div className="hero-glow w-[600px] h-[600px] -bottom-20 -left-20 opacity-20" />
-        
-        {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.02]" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
@@ -372,8 +265,8 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
-      {/* Impact Section */}
+      
+      {/* --- Impact Section --- */}
       <section id="impact" className="py-24 bg-background relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -431,7 +324,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* --- Features Section --- */}
       <section id="features" className="py-24 bg-muted/30 relative overflow-hidden">
         <div className="hero-glow w-[600px] h-[600px] top-0 right-0 opacity-10" />
         
@@ -501,7 +394,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* --- How It Works --- */}
       <section id="how-it-works" className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -520,7 +413,8 @@ const Landing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8 relative">
               {/* Connection line */}
-              <div className="hidden md:block absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+              {/* The right-1/6 and left-1/6 classes are Tailwind approximations for positioning */}
+              <div className="hidden md:block absolute top-16 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
               
               {[
                 {
@@ -552,7 +446,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Testimonials / Social Proof */}
+      {/* --- Testimonials / Social Proof --- */}
       <section className="py-24 bg-gradient-hero relative overflow-hidden">
         <div className="hero-glow w-[600px] h-[600px] -bottom-40 -left-40 opacity-20" />
         
@@ -596,7 +490,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* --- CTA Section --- */}
       <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -622,7 +516,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* --- Footer --- */}
       <footer className="bg-card border-t border-border py-12">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
