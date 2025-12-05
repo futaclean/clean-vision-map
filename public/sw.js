@@ -1,49 +1,73 @@
-const CACHE_NAME = 'vision-map-cache-v1';
-// List the assets you want to cache on install (your main index.html, CSS, JS, etc.)
+const CACHE_NAME = 'cleanfuta-static-v1';
+const DYNAMIC_CACHE = 'cleanfuta-dynamic-v1';
+
+// List of static files to pre-cache, including the PWA icon.
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css', // If you have a main style file
-  '/app.js',     // If you have a main JS bundle
-  '/icons/icon-192x192.png'
+  '/looo.png',  // <-- Your PWA icon
+  // Add main CSS/JS bundles here if your build tool doesn't handle caching them automatically
 ];
 
+// 1. Installation: Pre-cache static assets
 self.addEventListener('install', event => {
+  console.log('[Service Worker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        return cache.addAll(urlsToCache);
+        console.log('[Service Worker] Pre-caching static assets.');
+        return cache.addAll(urlsToCache).catch(error => {
+            console.error('[Service Worker] Failed to pre-cache some files:', error);
+        });
       })
   );
   self.skipWaiting();
 });
 
+// 2. Fetching: Cache-first strategy for static content
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return the response
-        if (response) {
-          return response;
-        }
-        // No cache match - fetch from network
-        return fetch(event.request);
-      })
-  );
+    if (event.request.method !== 'GET') return;
+
+    event.respondWith(
+        caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+
+            return fetch(event.request)
+                .then(networkResponse => {
+                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                        return networkResponse;
+                    }
+                    
+                    const responseToCache = networkResponse.clone();
+                    caches.open(DYNAMIC_CACHE)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    
+                    return networkResponse;
+                }).catch(() => {
+                    return caches.match('/index.html'); 
+                });
+        })
+    );
 });
 
-// Add an activate event to clean up old caches (optional but recommended)
+// 3. Activation: Clean up old caches
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+    console.log('[Service Worker] Activating...');
+    const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE];
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log('[Service Worker] Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim()) 
+    );
 });
