@@ -10,57 +10,8 @@ import { useEffect, useState } from "react";
 import splashImage from "@/assets/cleanfuta-splash.png";
 import apkFile from "@/assets/cleanfuta-app.apk"; 
 
-// --- Component: DownloadModal (for APK Download) ---
-interface DownloadModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  apkDownloadUrl: string;
-}
-
-const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownloadUrl }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-0 duration-300">
-      <div className="bg-card rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-border relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors">
-          <X className="h-5 w-5" />
-        </button>
-        <div className="text-center">
-          <div className="bg-gradient-primary rounded-xl p-3 w-fit mx-auto mb-4 shadow-button">
-            <Download className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h3 className="text-2xl font-display font-bold text-foreground mb-3">
-            Get the CleanFUTA App
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Download the official Android app for real-time reporting and tracking on the go.
-          </p>
-          
-          <Button 
-            size="lg" 
-            asChild 
-            className="w-full text-base shadow-elevated"
-            // Use an anchor tag for download and close the modal immediately
-            onClick={onClose} 
-          >
-            {/* The anchor tag triggers the download */}
-            <a href={apkDownloadUrl} download="CleanFUTA.apk">
-              <Download className="mr-2 h-5 w-5" />
-              Download Android APK
-            </a>
-          </Button>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            (For Android devices only. For an iOS-like experience, use your browser's "Add to Home Screen" feature.)
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Animated counter hook (Used in Hero section) ---
+// --- Animated counter hook (keeping it a function for readability/reusability) ---
+// This acts as the "JavaScript logic" for the animation.
 const useCounter = (end: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
@@ -81,6 +32,57 @@ const useCounter = (end: number, duration: number = 2000) => {
   return { count, start: () => setStarted(true) };
 };
 
+// --- Component: DownloadModal (for APK Download) ---
+interface DownloadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apkDownloadUrl: string;
+}
+
+const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownloadUrl }) => {
+  if (!isOpen) return null;
+
+  return (
+    // Backdrop with fixed position and animation
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-0 duration-300">
+      {/* Modal Card with pop-in animation */}
+      <div className="bg-card rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-border relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
+        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="text-center">
+          <div className="bg-gradient-primary rounded-xl p-3 w-fit mx-auto mb-4 shadow-button">
+            <Download className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <h3 className="text-2xl font-display font-bold text-foreground mb-3">
+            Get the CleanFUTA App
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            Download the official Android app to report waste issues instantly and get real-time status updates.
+          </p>
+          
+          <Button 
+            size="lg" 
+            asChild 
+            className="w-full text-base shadow-elevated"
+            // The button closes the modal and triggers the native file download via the anchor tag
+            onClick={onClose} 
+          >
+            <a href={apkDownloadUrl} download="CleanFUTA.apk">
+              <Download className="mr-2 h-5 w-5" />
+              DOWNLOAD NOW
+            </a>
+          </Button>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            (For Android devices only. iOS users can use the "Add to Home Screen" browser feature.)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Main Landing Component ---
 const Landing = () => {
   // State for controlling the download popup
@@ -92,8 +94,8 @@ const Landing = () => {
   const users = useCounter(500, 2000);
   const locations = useCounter(150, 1500);
   
+  // Logic to start counters and auto-open modal
   useEffect(() => {
-    // Start counters
     const counterTimer = setTimeout(() => {
       reports.start();
       cleaned.start();
@@ -101,25 +103,86 @@ const Landing = () => {
       locations.start();
     }, 500);
     
-    // Auto-open modal logic (moved from the duplicate code block)
+    // Auto-open modal logic: Show the pop-up 2 seconds after the page loads
     const modalTimer = setTimeout(() => {
       setIsDownloadModalOpen(true); 
-    }, 2000); // Opens 2 seconds after page load
+    }, 2000); 
 
     return () => {
       clearTimeout(counterTimer);
       clearTimeout(modalTimer);
     }
-  }, []); // Empty dependency array ensures it runs once on mount
+  }, []); 
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      
-      {/* Download Modal Component (Will auto-open and can be triggered by nav button) */}
+        {/*
+          INLINE CSS DEFINITIONS:
+          This <style> block defines the custom CSS classes (keyframes, shadows, gradients) 
+          that are required by the Tailwind classes used throughout the component (e.g., hero-glow, animate-float).
+          In a true React environment, this would be in a separate CSS file or configured in tailwind.config.js,
+          but this placement satisfies the "inline CSS" requirement for these definitions.
+        */}
+        <style jsx="true">{`
+          /* Custom Keyframes */
+          @keyframes glow {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.05); }
+          }
+          @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0.5deg); }
+            50% { transform: translateY(-10px) rotate(-0.5deg); }
+          }
+          @keyframes float-slow {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(1deg); }
+          }
+
+          /* Custom Animation Classes (Mapped from keyframes) */
+          .animate-glow { animation: glow 8s ease-in-out infinite; }
+          .animate-float { animation: float 5s ease-in-out infinite; }
+          .animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
+
+          /* Hero Section Background Glow */
+          .hero-glow {
+            position: absolute;
+            border-radius: 9999px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 60%);
+            filter: blur(100px);
+            opacity: 0.15;
+            pointer-events: none;
+          }
+
+          /* Glass Card Effect */
+          .glass-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+
+          /* Custom Shadows */
+          .shadow-button {
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+          }
+
+          .shadow-elevated {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
+          }
+
+          /* Text Gradient */
+          .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #34d399, #10b981);
+          }
+        `}</style>
+
+      {/* Download Modal Component */}
       <DownloadModal 
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
-        apkDownloadUrl={apkFile} // Passes the imported path
+        apkDownloadUrl={apkFile}
       />
       
       {/* Navigation */}
@@ -137,11 +200,9 @@ const Landing = () => {
             <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
-            {/* Added Download Button to Nav to manually trigger the modal */}
             <Button variant="ghost" size="sm" onClick={() => setIsDownloadModalOpen(true)} className="hidden sm:inline-flex">
               <Download className="h-4 w-4 mr-1" /> App
             </Button>
-            {/* ---------------------------------- */}
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Sign In</Link>
             </Button>
@@ -154,7 +215,7 @@ const Landing = () => {
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Background elements (kept original styles) */}
+        {/* Background elements */}
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="hero-glow w-[800px] h-[800px] -top-40 -right-40" />
         <div className="hero-glow w-[600px] h-[600px] -bottom-20 -left-20 opacity-20" />
@@ -266,7 +327,7 @@ const Landing = () => {
         </div>
       </section>
       
-      {/* --- Impact Section --- */}
+      {/* Impact Section */}
       <section id="impact" className="py-24 bg-background relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -324,7 +385,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- Features Section --- */}
+      {/* Features Section */}
       <section id="features" className="py-24 bg-muted/30 relative overflow-hidden">
         <div className="hero-glow w-[600px] h-[600px] top-0 right-0 opacity-10" />
         
@@ -394,7 +455,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- How It Works --- */}
+      {/* How It Works */}
       <section id="how-it-works" className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -413,7 +474,6 @@ const Landing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8 relative">
               {/* Connection line */}
-              {/* The right-1/6 and left-1/6 classes are Tailwind approximations for positioning */}
               <div className="hidden md:block absolute top-16 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
               
               {[
@@ -446,7 +506,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- Testimonials / Social Proof --- */}
+      {/* Testimonials / Social Proof */}
       <section className="py-24 bg-gradient-hero relative overflow-hidden">
         <div className="hero-glow w-[600px] h-[600px] -bottom-40 -left-40 opacity-20" />
         
@@ -490,7 +550,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- CTA Section --- */}
+      {/* CTA Section */}
       <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -516,7 +576,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- Footer --- */}
+      {/* Footer */}
       <footer className="bg-card border-t border-border py-12">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
