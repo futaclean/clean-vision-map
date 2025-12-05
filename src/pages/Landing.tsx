@@ -1,4 +1,189 @@
 import { Button } from "@/components/ui/button";
+import {
+  MapPin, Leaf, Camera, BarChart3, Users, Shield,
+  ArrowRight, ChevronRight, Globe, Zap, Target,
+  CheckCircle2, Sparkles, TrendingUp, Award, Download, X
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import splashImage from "@/assets/cleanfuta-splash.png";
+// Assuming you add your APK file to the assets directory
+import apkFile from "@/assets/cleanfuta-app.apk"; 
+
+// --- New Component: DownloadModal ---
+interface DownloadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apkDownloadUrl: string;
+}
+
+const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownloadUrl }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-0 duration-300">
+      <div className="bg-card rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-border relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
+        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="text-center">
+          <div className="bg-gradient-primary rounded-xl p-3 w-fit mx-auto mb-4 shadow-button">
+            <Download className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <h3 className="text-2xl font-display font-bold text-foreground mb-3">
+            Get the CleanFUTA App
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            Download the official Android app for real-time reporting and tracking on the go.
+          </p>
+          
+          <Button 
+            size="lg" 
+            asChild 
+            className="w-full text-base shadow-elevated"
+            onClick={onClose} // Close the modal on click
+          >
+            {/* The anchor tag triggers the download */}
+            <a href={apkDownloadUrl} download="CleanFUTA.apk">
+              <Download className="mr-2 h-5 w-5" />
+              Download Android APK
+            </a>
+          </Button>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            (For Android devices only. iOS coming soon!)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+// --- End New Component: DownloadModal ---
+
+
+// Animated counter hook (Unchanged)
+const useCounter = (end: number, duration: number = 2000) => {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!started) return;
+    
+    let startTime: number | null = null;
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      setCount(Math.floor(progress * end));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [end, duration, started]);
+
+  return { count, start: () => setStarted(true) };
+};
+
+const Landing = () => {
+  // New state for controlling the download popup
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  
+  const reports = useCounter(2500, 2500);
+  const cleaned = useCounter(1800, 2500);
+  const users = useCounter(500, 2000);
+  const locations = useCounter(150, 1500);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      reports.start();
+      cleaned.start();
+      users.start();
+      locations.start();
+      // Logic to open the modal after a delay, e.g., 2 seconds
+      setIsDownloadModalOpen(true); 
+    }, 2000); // 2000ms = 2 seconds after page load
+
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array ensures it runs once on mount
+
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      
+      {/* 1. New Download Modal Component */}
+      <DownloadModal 
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        apkDownloadUrl={apkFile} // Use the imported APK file path
+      />
+      {/* ---------------------------------- */}
+      
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+              <Leaf className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-display font-bold text-foreground">CleanFUTA</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+            <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* 2. Added Download Button to Nav (Optional, but useful) */}
+            <Button variant="ghost" size="sm" onClick={() => setIsDownloadModalOpen(true)} className="hidden sm:inline-flex">
+              <Download className="h-4 w-4 mr-1" /> App
+            </Button>
+            {/* ---------------------------------- */}
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+              <Link to="/auth">Sign In</Link>
+            </Button>
+            <Button size="sm" asChild className="shadow-button">
+              <Link to="/auth">Get Started</Link>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section (Content Unchanged) */}
+      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
+        {/* ... (Hero content remains the same) */}
+      </section>
+
+      {/* Impact Section (Content Unchanged) */}
+      <section id="impact" className="py-24 bg-background relative">
+        {/* ... (Impact content remains the same) */}
+      </section>
+
+      {/* Features Section (Content Unchanged) */}
+      <section id="features" className="py-24 bg-muted/30 relative overflow-hidden">
+        {/* ... (Features content remains the same) */}
+      </section>
+
+      {/* How It Works (Content Unchanged) */}
+      <section id="how-it-works" className="py-24 bg-background">
+        {/* ... (How It Works content remains the same) */}
+      </section>
+
+      {/* Testimonials / Social Proof (Content Unchanged) */}
+      <section className="py-24 bg-gradient-hero relative overflow-hidden">
+        {/* ... (Testimonials content remains the same) */}
+      </section>
+
+      {/* CTA Section (Content Unchanged) */}
+      <section className="py-24 bg-background">
+        {/* ... (CTA content remains the same) */}
+      </section>
+
+      {/* Footer (Content Unchanged) */}
+      <footer className="bg-card border-t border-border py-12">
+        {/* ... (Footer content remains the same) */}
+      </footer>
+    </div>
+  );
+};
+
+export default Landing;import { Button } from "@/components/ui/button";
 import { 
   MapPin, Leaf, Camera, BarChart3, Users, Shield, 
   ArrowRight, ChevronRight, Globe, Zap, Target, 
