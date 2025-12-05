@@ -1,16 +1,14 @@
 import { Button } from "@/components/ui/button";
-import {
-  MapPin, Leaf, Camera, BarChart3, Users, Shield,
-  ArrowRight, ChevronRight, Globe, Zap, Target,
-  CheckCircle2, Sparkles, TrendingUp, Award, Download, X
+import { 
+  MapPin, Leaf, Camera, BarChart3, Users, Shield, 
+  ArrowRight, ChevronRight, Globe, Zap, Target, 
+  CheckCircle2, Sparkles, TrendingUp, Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-// Assuming these imports are correct in your project setup
 import splashImage from "@/assets/cleanfuta-splash.png";
-import apkFile from "@/assets/cleanfuta-app.apk"; 
 
-// --- Animated counter hook (keeping it a function for readability/reusability) ---
+// Animated counter hook
 const useCounter = (end: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
@@ -31,151 +29,25 @@ const useCounter = (end: number, duration: number = 2000) => {
   return { count, start: () => setStarted(true) };
 };
 
-// --- Component: DownloadModal (for APK Download) ---
-interface DownloadModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  apkDownloadUrl: string;
-}
-
-const DownloadModal: React.FC<DownloadModalProps> = ({ isOpen, onClose, apkDownloadUrl }) => {
-  if (!isOpen) return null;
-
-  return (
-    // Backdrop with fixed position and animation
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-0 duration-300">
-      {/* Modal Card with pop-in animation */}
-      <div className="bg-card rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-border relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors">
-          <X className="h-5 w-5" />
-        </button>
-        <div className="text-center">
-          <div className="bg-gradient-primary rounded-xl p-3 w-fit mx-auto mb-4 shadow-button">
-            <Download className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h3 className="text-2xl font-display font-bold text-foreground mb-3">
-            Get the CleanFUTA App
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Download the official Android app to report waste issues instantly and get real-time status updates.
-          </p>
-          
-          {/* This button triggers the native download and closes the modal */}
-          <Button 
-            size="lg" 
-            asChild 
-            className="w-full text-base shadow-elevated"
-            onClick={onClose} 
-          >
-            <a href={apkDownloadUrl} download="CleanFUTA.apk">
-              <Download className="mr-2 h-5 w-5" />
-              DOWNLOAD NOW
-            </a>
-          </Button>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            (For Android devices only. iOS users can use the "Add to Home Screen" browser feature.)
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Main Landing Component ---
 const Landing = () => {
-  // State for controlling the download popup
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-  
-  // Counters initialization
   const reports = useCounter(2500, 2500);
   const cleaned = useCounter(1800, 2500);
   const users = useCounter(500, 2000);
   const locations = useCounter(150, 1500);
   
-  // Logic to start counters (Auto-open modal removed here)
   useEffect(() => {
-    const counterTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       reports.start();
       cleaned.start();
       users.start();
       locations.start();
     }, 500);
-    
-    // NOTE: The automatic modal timer (setTimeout) has been REMOVED.
-    // The user must now click a button to open the download modal.
-
-    return () => {
-      clearTimeout(counterTimer);
-    }
-  }, []); 
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-        {/* INLINE CSS DEFINITIONS (Kept for consistency and custom Tailwind classes) */}
-        <style jsx="true">{`
-          /* Custom Keyframes */
-          @keyframes glow {
-            0%, 100% { opacity: 0.7; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.05); }
-          }
-          @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0.5deg); }
-            50% { transform: translateY(-10px) rotate(-0.5deg); }
-          }
-          @keyframes float-slow {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-5px) rotate(1deg); }
-          }
-
-          /* Custom Animation Classes (Mapped from keyframes) */
-          .animate-glow { animation: glow 8s ease-in-out infinite; }
-          .animate-float { animation: float 5s ease-in-out infinite; }
-          .animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
-
-          /* Hero Section Background Glow */
-          .hero-glow {
-            position: absolute;
-            border-radius: 9999px;
-            background: radial-gradient(circle, var(--primary) 0%, transparent 60%);
-            filter: blur(100px);
-            opacity: 0.15;
-            pointer-events: none;
-          }
-
-          /* Glass Card Effect */
-          .glass-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
-
-          /* Custom Shadows */
-          .shadow-button {
-            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
-          }
-
-          .shadow-elevated {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
-          }
-
-          /* Text Gradient */
-          .text-gradient {
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            background-image: linear-gradient(to right, #34d399, #10b981);
-          }
-        `}</style>
-
-      {/* Download Modal Component */}
-      <DownloadModal 
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-        apkDownloadUrl={apkFile}
-      />
-      
-      {/* Navigation (Manual download button retained) */}
+      {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -190,10 +62,6 @@ const Landing = () => {
             <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
-            {/* Download button in Nav bar */}
-            <Button variant="ghost" size="sm" onClick={() => setIsDownloadModalOpen(true)} className="hidden sm:inline-flex">
-              <Download className="h-4 w-4 mr-1" /> App
-            </Button>
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Sign In</Link>
             </Button>
@@ -203,13 +71,15 @@ const Landing = () => {
           </div>
         </div>
       </nav>
-      
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="hero-glow w-[800px] h-[800px] -top-40 -right-40" />
         <div className="hero-glow w-[600px] h-[600px] -bottom-20 -left-20 opacity-20" />
+        
+        {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.02]" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
@@ -236,30 +106,17 @@ const Landing = () => {
                 waste issues in real-time using cutting-edge AI technology.
               </p>
               
-              {/* --- STRATEGIC DOWNLOAD NOW BUTTON --- */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                
-                {/* 1. Primary "Download Now" Button to Open Modal */}
-                <Button 
-                  size="lg" 
-                  onClick={() => setIsDownloadModalOpen(true)} 
-                  className="bg-white text-primary hover:bg-white/95 shadow-elevated text-base px-8 h-12 font-semibold group"
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  DOWNLOAD NOW (APK)
-                </Button>
-
-                {/* 2. Secondary "Start Reporting" Button */}
-                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12 backdrop-blur-sm group">
+                <Button size="lg" asChild className="bg-white text-primary hover:bg-white/95 shadow-elevated text-base px-8 h-12 font-semibold group">
                   <Link to="/auth">
                     Start Reporting
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-
+                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12 backdrop-blur-sm">
+                  <Link to="/auth?role=admin">Admin Portal</Link>
+                </Button>
               </div>
-              {/* --- END STRATEGIC BUTTONS --- */}
-
 
               {/* Stats row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-white/10 animate-fade-in" style={{ animationDelay: "0.4s" }}>
@@ -330,8 +187,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-      
-      {/* ... Other sections (Impact, Features, How It Works, Testimonials, CTA, Footer) remain unchanged ... */}
 
       {/* Impact Section */}
       <section id="impact" className="py-24 bg-background relative">
@@ -480,7 +335,7 @@ const Landing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8 relative">
               {/* Connection line */}
-              <div className="hidden md:block absolute top-16 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+              <div className="hidden md:block absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
               
               {[
                 {
