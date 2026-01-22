@@ -14,6 +14,7 @@ import MapSkeleton from "@/components/MapSkeleton";
 import SubmissionProgress from "@/components/SubmissionProgress";
 import Confetti from "@/components/Confetti";
 import FUTALocationPicker from "@/components/FUTALocationPicker";
+import WasteScannerOverlay from "@/components/WasteScannerOverlay";
 import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
 import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
 import { getFUTALocationName, FUTALandmark } from "@/lib/futaLocations";
@@ -31,6 +32,7 @@ const ReportWaste = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [submissionStep, setSubmissionStep] = useState<'location' | 'uploading' | 'saving' | 'complete' | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -272,6 +274,13 @@ const ReportWaste = () => {
       return;
     }
 
+    // Start scanning animation
+    setIsScanning(true);
+  };
+
+  const handleScanVerified = async () => {
+    // Continue with actual submission after successful scan
+    setIsScanning(false);
     setLoading(true);
 
     try {
@@ -369,6 +378,22 @@ const ReportWaste = () => {
     <div className="min-h-screen bg-background">
       {/* Confetti Animation */}
       <Confetti active={showConfetti} />
+      
+      {/* Waste Scanner Overlay */}
+      <WasteScannerOverlay
+        imageUrl={imagePreview}
+        isScanning={isScanning}
+        onVerified={handleScanVerified}
+        onRejected={(reason) => {
+          setIsScanning(false);
+          hapticError();
+          toast({
+            title: "Image not accepted",
+            description: reason || "Please upload a clear image of waste",
+            variant: "destructive",
+          });
+        }}
+      />
       
       {/* Submission Progress Overlay */}
       <SubmissionProgress currentStep={submissionStep} />
