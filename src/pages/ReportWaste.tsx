@@ -462,20 +462,46 @@ const ReportWaste = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div>
-                      <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <label htmlFor="image" className="cursor-pointer">
-                        <span className="text-primary font-medium">Click to upload</span>
-                        <span className="text-muted-foreground"> or drag and drop</span>
-                      </label>
-                      <input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
+                    <div className="space-y-4">
+                      <Camera className="h-12 w-12 mx-auto text-muted-foreground" />
+                      
+                      {/* Camera and Upload Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        {/* Direct Camera Capture - Primary on mobile */}
+                        <label htmlFor="camera-capture" className="cursor-pointer">
+                          <div className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-lg">
+                            <Camera className="h-5 w-5" />
+                            Take Photo
+                          </div>
+                          <input
+                            id="camera-capture"
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={handleImageChange}
+                          />
+                        </label>
+                        
+                        {/* File Upload - Secondary option */}
+                        <label htmlFor="image-upload" className="cursor-pointer">
+                          <div className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-input bg-background rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                            <Upload className="h-5 w-5" />
+                            Upload Image
+                          </div>
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageChange}
+                          />
+                        </label>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground">
+                        JPEG, PNG, or WebP • Max 10MB
+                      </p>
                     </div>
                   )}
                 </div>
