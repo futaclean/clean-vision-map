@@ -1,14 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Scan, Shield, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
+import { Check, X, Scan, Shield, Sparkles, Loader2, AlertTriangle, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+
+interface ScanResult {
+  verified: boolean;
+  confidence: number;
+  reason: string;
+  suggestedWasteType?: string | null;
+  wasteDescription?: string | null;
+}
 
 interface WasteScannerOverlayProps {
   imageUrl: string;
   isScanning: boolean;
-  onVerified: () => void;
+  onVerified: (suggestedWasteType?: string, wasteDescription?: string) => void;
   onRejected: (reason: string) => void;
 }
+
+const wasteTypeLabels: Record<string, { label: string; color: string }> = {
+  plastic: { label: 'Plastic Waste', color: 'bg-blue-500' },
+  paper: { label: 'Paper/Cardboard', color: 'bg-amber-500' },
+  food: { label: 'Food/Organic', color: 'bg-green-500' },
+  hazardous: { label: 'Hazardous', color: 'bg-red-500' },
+  mixed: { label: 'Mixed Waste', color: 'bg-purple-500' },
+  other: { label: 'Other', color: 'bg-gray-500' },
+};
 
 const WasteScannerOverlay = ({ 
   imageUrl, 
@@ -17,10 +35,12 @@ const WasteScannerOverlay = ({
   onRejected
 }: WasteScannerOverlayProps) => {
   const [scanProgress, setScanProgress] = useState(0);
-  const [scanPhase, setScanPhase] = useState<'initializing' | 'analyzing' | 'verifying' | 'complete'>('initializing');
+  const [scanPhase, setScanPhase] = useState<'initializing' | 'analyzing' | 'classifying' | 'verifying' | 'complete'>('initializing');
   const [showResult, setShowResult] = useState(false);
   const [scanResult, setScanResult] = useState<'verified' | 'rejected' | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [detectedWasteType, setDetectedWasteType] = useState<string | null>(null);
+  const [wasteDescription, setWasteDescription] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isScanning) {
@@ -29,6 +49,8 @@ const WasteScannerOverlay = ({
       setShowResult(false);
       setScanResult(null);
       setRejectionReason('');
+      setDetectedWasteType(null);
+      setWasteDescription(null);
       return;
     }
 
@@ -46,6 +68,8 @@ const WasteScannerOverlay = ({
         } else if (data) {
           if (data.verified) {
             setScanResult('verified');
+            setDetectedWasteType(data.suggestedWasteType || null);
+            setWasteDescription(data.wasteDescription || null);
           } else {
             setScanResult('rejected');
             setRejectionReason(data.reason || 'Image does not appear to contain waste');
@@ -73,8 +97,9 @@ const WasteScannerOverlay = ({
 
     // Update scan phases for visual effect
     const phaseTimers = [
-      setTimeout(() => setScanPhase('analyzing'), 800),
-      setTimeout(() => setScanPhase('verifying'), 2000),
+      setTimeout(() => setScanPhase('analyzing'), 600),
+      setTimeout(() => setScanPhase('classifying'), 1400),
+      setTimeout(() => setScanPhase('verifying'), 2200),
     ];
 
     return () => {
@@ -96,23 +121,26 @@ const WasteScannerOverlay = ({
     if (showResult && scanResult) {
       const timer = setTimeout(() => {
         if (scanResult === 'verified') {
-          onVerified();
+          onVerified(detectedWasteType || undefined, wasteDescription || undefined);
         } else {
           onRejected(rejectionReason);
         }
-      }, scanResult === 'verified' ? 1500 : 2500);
+      }, scanResult === 'verified' ? 2000 : 2500);
       return () => clearTimeout(timer);
     }
-  }, [showResult, scanResult, onVerified, onRejected, rejectionReason]);
+  }, [showResult, scanResult, onVerified, onRejected, rejectionReason, detectedWasteType, wasteDescription]);
 
   if (!isScanning && !showResult) return null;
 
   const phaseMessages = {
     initializing: 'Initializing AI Scanner...',
     analyzing: 'Analyzing image content...',
-    verifying: 'Verifying waste detection...',
-    complete: scanResult === 'verified' ? 'Waste Verified!' : 'Verification Failed'
+    classifying: 'Classifying waste type...',
+    verifying: 'Verifying detection...',
+    complete: scanResult === 'verified' ? 'Waste Detected!' : 'Verification Failed'
   };
+
+  const typeInfo = detectedWasteType ? wasteTypeLabels[detectedWasteType] : null;
 
   return (
     <AnimatePresence>
@@ -231,7 +259,7 @@ const WasteScannerOverlay = ({
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className={`absolute inset-0 flex items-center justify-center ${
+                  className={`absolute inset-0 flex flex-col items-center justify-center ${
                     scanResult === 'verified' 
                       ? 'bg-green-500/30' 
                       : 'bg-red-500/30'
@@ -241,18 +269,33 @@ const WasteScannerOverlay = ({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', damping: 10, stiffness: 100 }}
-                    className={`w-24 h-24 rounded-full flex items-center justify-center ${
+                    className={`w-20 h-20 rounded-full flex items-center justify-center ${
                       scanResult === 'verified'
                         ? 'bg-green-500 shadow-[0_0_40px_rgba(34,197,94,0.6)]'
                         : 'bg-red-500 shadow-[0_0_40px_rgba(239,68,68,0.6)]'
                     }`}
                   >
                     {scanResult === 'verified' ? (
-                      <Check className="w-12 h-12 text-white" />
+                      <Check className="w-10 h-10 text-white" />
                     ) : (
-                      <X className="w-12 h-12 text-white" />
+                      <X className="w-10 h-10 text-white" />
                     )}
                   </motion.div>
+
+                  {/* Waste Type Badge on successful scan */}
+                  {scanResult === 'verified' && typeInfo && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="mt-4"
+                    >
+                      <Badge className={`${typeInfo.color} text-white text-sm px-4 py-2 shadow-lg`}>
+                        <Tag className="w-4 h-4 mr-2" />
+                        {typeInfo.label}
+                      </Badge>
+                    </motion.div>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -285,12 +328,33 @@ const WasteScannerOverlay = ({
                     </span>
                   </>
                 ) : scanResult === 'verified' ? (
-                  <>
-                    <Shield className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-green-500">
-                      Waste Verified - Proceeding with submission
-                    </span>
-                  </>
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <Shield className="w-5 h-5 text-green-500" />
+                      <span className="text-sm font-medium text-green-500">
+                        Waste Verified!
+                      </span>
+                    </div>
+                    {wasteDescription && (
+                      <motion.p 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-muted-foreground max-w-xs"
+                      >
+                        {wasteDescription}
+                      </motion.p>
+                    )}
+                    {typeInfo && (
+                      <motion.p 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-xs text-primary font-medium"
+                      >
+                        Auto-selecting: {typeInfo.label}
+                      </motion.p>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
