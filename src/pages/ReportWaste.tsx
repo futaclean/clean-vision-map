@@ -278,7 +278,17 @@ const ReportWaste = () => {
     setIsScanning(true);
   };
 
-  const handleScanVerified = async () => {
+  const handleScanVerified = async (suggestedWasteType?: string, wasteDescription?: string) => {
+    // Auto-fill waste type if suggested by AI
+    if (suggestedWasteType && isValidWasteType(suggestedWasteType)) {
+      setWasteType(suggestedWasteType);
+      hapticLight();
+      toast({
+        title: "Waste type detected",
+        description: `AI detected: ${suggestedWasteType.charAt(0).toUpperCase() + suggestedWasteType.slice(1)} waste`,
+      });
+    }
+
     // Continue with actual submission after successful scan
     setIsScanning(false);
     setLoading(true);

@@ -62,19 +62,29 @@ INVALID images (reject these):
 - Photos of buildings/structures without waste
 - Random objects that are not waste
 
+WASTE TYPE CATEGORIES (choose the best match):
+- "plastic" - Plastic bottles, bags, containers, packaging
+- "paper" - Paper, cardboard, newspapers, documents
+- "food" - Food scraps, organic waste, leftover meals
+- "hazardous" - Batteries, chemicals, electronic waste, medical waste
+- "mixed" - Multiple types of waste mixed together
+- "other" - Anything that doesn't fit above categories
+
 Respond with a JSON object containing:
 - "isWaste": boolean (true if the image shows waste that should be reported)
 - "confidence": number (0-100)
 - "reason": string (brief explanation)
+- "wasteType": string (one of: plastic, paper, food, hazardous, mixed, other)
+- "wasteDescription": string (brief description of what waste was detected, e.g. "Plastic bottles and bags near a drain")
 
-Be strict but fair. If there's visible waste in the image, accept it.`
+Be strict but fair. If there's visible waste in the image, accept it and categorize it accurately.`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this image and determine if it shows waste that should be reported for cleanup. Respond with JSON only."
+                text: "Analyze this image and determine if it shows waste that should be reported for cleanup. Identify the waste type and provide a brief description. Respond with JSON only."
               },
               {
                 type: "image_url",
@@ -85,7 +95,7 @@ Be strict but fair. If there's visible waste in the image, accept it.`
             ]
           }
         ],
-        max_tokens: 200
+        max_tokens: 300
       }),
     });
 
@@ -156,11 +166,17 @@ Be strict but fair. If there's visible waste in the image, accept it.`
       };
     }
 
+    // Validate waste type
+    const validWasteTypes = ['plastic', 'paper', 'food', 'hazardous', 'mixed', 'other'];
+    const suggestedType = validWasteTypes.includes(result.wasteType) ? result.wasteType : 'mixed';
+
     return new Response(
       JSON.stringify({
         verified: result.isWaste === true,
         confidence: result.confidence || 50,
-        reason: result.reason || (result.isWaste ? "Waste verified" : "No waste detected in image")
+        reason: result.reason || (result.isWaste ? "Waste verified" : "No waste detected in image"),
+        suggestedWasteType: result.isWaste ? suggestedType : null,
+        wasteDescription: result.isWaste ? (result.wasteDescription || null) : null
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
