@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, BarChart3, FileText, Menu, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search, Download, Scan, Activity, Zap } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search, Download, Scan, Activity, Zap, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
+import { MobileNav } from "@/components/MobileNav";
 
 const Dashboard = () => {
   const { user, signOut, loading } = useAuth();
@@ -524,13 +525,25 @@ const Dashboard = () => {
           
           <div className="flex items-center gap-2">
             <NotificationBell />
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-primary/10 font-mono text-xs tracking-wider">
+            <Button variant="ghost" size="sm" onClick={signOut} className="hidden sm:inline-flex text-muted-foreground hover:text-foreground hover:bg-primary/10 font-mono text-xs tracking-wider">
               <LogOut className="h-4 w-4 mr-1.5" />
               Logout
             </Button>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+            <MobileNav
+              links={[
+                { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+                { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+                { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+                ...(isAdmin ? [{ label: "Admin Panel", to: "/admin", icon: <Shield className="h-4 w-4" /> }] : []),
+                ...(isCleaner && !isAdmin ? [{ label: "Cleaner Panel", to: "/cleaner", icon: <Activity className="h-4 w-4" /> }] : []),
+              ]}
+              actions={
+                <Button variant="outline" className="w-full font-mono text-xs tracking-wider" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-1.5" />
+                  Logout
+                </Button>
+              }
+            />
           </div>
         </div>
       </header>
