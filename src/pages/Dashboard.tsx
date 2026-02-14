@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, BarChart3, FileText, Menu, Leaf, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
+import { Camera, MapPin, BarChart3, FileText, Menu, LogOut, Clock, CheckCircle2, Shield, Edit2, X, Save, Trash2, ChevronLeft, ChevronRight, Search, Download, Scan, Activity, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -468,8 +468,10 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-12 h-12 neon-border rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Scan className="h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase">Initializing...</p>
         </div>
       </div>
     );
@@ -478,62 +480,70 @@ const Dashboard = () => {
   if (!user) return null;
 
   const statsCards = [
-    { label: "Reports Submitted", value: stats.total.toString(), icon: FileText, color: "text-blue-600" },
-    { label: "Pending Review", value: stats.pending.toString(), icon: Clock, color: "text-yellow-600" },
-    { label: "Resolved Issues", value: stats.resolved.toString(), icon: CheckCircle2, color: "text-green-600" },
-    { label: "In Progress", value: stats.inProgress.toString(), icon: BarChart3, color: "text-primary" },
+    { label: "Reports Submitted", value: stats.total.toString(), icon: FileText, accent: "from-primary/20 to-primary/5" },
+    { label: "Pending Review", value: stats.pending.toString(), icon: Clock, accent: "from-yellow-500/20 to-yellow-500/5" },
+    { label: "Resolved Issues", value: stats.resolved.toString(), icon: CheckCircle2, accent: "from-emerald-500/20 to-emerald-500/5" },
+    { label: "In Progress", value: stats.inProgress.toString(), icon: Activity, accent: "from-blue-500/20 to-blue-500/5" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-white rounded-full p-2">
-                <Leaf className="h-5 w-5 text-primary" />
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                <Scan className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-white">Waste-Track AI</span>
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
             </div>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard" className="text-white hover:text-white/80 font-medium">
-                Dashboard
-              </Link>
-              <Link to="/report" className="text-white/80 hover:text-white font-medium">
-                Report Waste
-              </Link>
-              <Link to="/preferences" className="text-white/80 hover:text-white font-medium">
-                Preferences
-              </Link>
-              {isAdmin && (
-                <Link to="/admin" className="text-white/80 hover:text-white font-medium flex items-center gap-1">
-                  <Shield className="h-4 w-4" />
-                  Admin
-                </Link>
-              )}
-            </nav>
-            
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              <Button variant="ghost" onClick={signOut} className="text-white hover:bg-white/10">
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-              <Button variant="ghost" size="icon" className="md:hidden text-white">
-                <Menu className="h-5 w-5" />
-              </Button>
+            <div className="flex flex-col">
+              <span className="text-lg font-display font-bold text-foreground leading-tight">Waste-Track AI</span>
+              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Dashboard</span>
             </div>
+          </div>
+          
+          <nav className="hidden md:flex items-center gap-8">
+            <Link to="/dashboard" className="text-sm font-medium text-primary transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/report" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              Report Waste
+            </Link>
+            <Link to="/preferences" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              Preferences
+            </Link>
+            {isAdmin && (
+              <Link to="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </Link>
+            )}
+          </nav>
+          
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-primary/10 font-mono text-xs tracking-wider">
+              <LogOut className="h-4 w-4 mr-1.5" />
+              Logout
+            </Button>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Welcome back, {user.user_metadata?.full_name || 'User'}!
+          <div className="inline-flex items-center gap-2 bg-primary/10 neon-border px-4 py-2 rounded-full mb-4">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-mono text-primary tracking-wider uppercase">Control Panel</span>
+          </div>
+          <h1 className="text-4xl font-display font-bold text-foreground mb-2">
+            Welcome back, <span className="text-gradient">{user.user_metadata?.full_name || 'User'}</span>
           </h1>
           <p className="text-muted-foreground text-lg">
             Track your waste reports and environmental impact
@@ -543,15 +553,16 @@ const Dashboard = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statsCards.map((stat, index) => (
-            <Card key={index} className="shadow-card hover:shadow-glow transition-all duration-300 border-border">
-              <CardContent className="pt-6">
+            <Card key={index} className="neon-border hover:shadow-glow transition-all duration-300 group relative overflow-hidden">
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.accent} opacity-50`} />
+              <CardContent className="pt-6 relative z-10">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-1">{stat.label}</p>
+                    <p className="text-4xl font-display font-bold text-foreground">{stat.value}</p>
                   </div>
-                  <div className={`bg-gradient-card rounded-xl p-3 ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
+                  <div className="bg-gradient-primary rounded-xl p-3 shadow-button group-hover:scale-110 transition-transform">
+                    <stat.icon className="h-6 w-6 text-primary-foreground" />
                   </div>
                 </div>
               </CardContent>
@@ -561,20 +572,21 @@ const Dashboard = () => {
 
         {/* Admin Quick Access */}
         {isAdmin && (
-          <Card className="shadow-card border-border mb-8 bg-gradient-to-r from-primary/10 to-primary/5">
+          <Card className="neon-border mb-8 bg-gradient-to-r from-primary/10 to-primary/5 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-primary rounded-xl p-3">
+                <div className="bg-gradient-primary rounded-xl p-3 shadow-button">
                   <Shield className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle>Admin Access</CardTitle>
-                  <CardDescription>Manage reports, users, and cleaners</CardDescription>
+                  <CardTitle className="font-display">Admin Access</CardTitle>
+                  <CardDescription className="font-mono text-xs tracking-wider">Manage reports, users, and cleaners</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <Button asChild className="bg-gradient-primary hover:opacity-90">
+              <Button asChild className="bg-gradient-primary hover:opacity-90 shadow-button font-semibold">
                 <Link to="/admin">Open Admin Dashboard</Link>
               </Button>
             </CardContent>
@@ -583,20 +595,21 @@ const Dashboard = () => {
 
         {/* Cleaner Quick Access */}
         {isCleaner && !isAdmin && (
-          <Card className="shadow-card border-border mb-8 bg-gradient-to-r from-blue-500/10 to-blue-500/5">
+          <Card className="neon-border mb-8 bg-gradient-to-r from-accent/10 to-accent/5 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-blue-600 rounded-xl p-3">
-                  <CheckCircle2 className="h-6 w-6 text-white" />
+                <div className="bg-gradient-primary rounded-xl p-3 shadow-button">
+                  <CheckCircle2 className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle>Cleaner Dashboard</CardTitle>
-                  <CardDescription>View and manage your assigned reports</CardDescription>
+                  <CardTitle className="font-display">Cleaner Dashboard</CardTitle>
+                  <CardDescription className="font-mono text-xs tracking-wider">View and manage your assigned reports</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+              <Button asChild className="bg-gradient-primary hover:opacity-90 shadow-button font-semibold">
                 <Link to="/cleaner">Open Cleaner Dashboard</Link>
               </Button>
             </CardContent>
@@ -605,77 +618,52 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="shadow-card hover:shadow-glow transition-all duration-300 border-border group cursor-pointer">
-            <CardHeader>
-              <div className="bg-gradient-card rounded-xl p-4 w-fit mb-2 group-hover:scale-110 transition-transform">
-                <Camera className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle>Report New Waste</CardTitle>
-              <CardDescription>
-                Upload a photo and report waste in your area
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full bg-gradient-primary hover:opacity-90">
-                <Link to="/report">Start Report</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card hover:shadow-glow transition-all duration-300 border-border group cursor-pointer">
-            <CardHeader>
-              <div className="bg-gradient-card rounded-xl p-4 w-fit mb-2 group-hover:scale-110 transition-transform">
-                <MapPin className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle>View Map</CardTitle>
-              <CardDescription>
-                See waste hotspots and reports on the map
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full border-primary/50 hover:bg-primary/5">
-                <Link to="/map">Open Map</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card hover:shadow-glow transition-all duration-300 border-border group cursor-pointer">
-            <CardHeader>
-              <div className="bg-gradient-card rounded-xl p-4 w-fit mb-2 group-hover:scale-110 transition-transform">
-                <BarChart3 className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle>Your Analytics</CardTitle>
-              <CardDescription>
-                View your environmental impact statistics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full border-primary/50 hover:bg-primary/5">
-                <Link to="/analytics">View Stats</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {[
+            { icon: Camera, title: "Report New Waste", desc: "Upload a photo and report waste in your area", link: "/report", label: "Start Report", primary: true, tag: "SCAN" },
+            { icon: MapPin, title: "View Map", desc: "See waste hotspots and reports on the map", link: "/map", label: "Open Map", primary: false, tag: "MAP" },
+            { icon: BarChart3, title: "Your Analytics", desc: "View your environmental impact statistics", link: "/analytics", label: "View Stats", primary: false, tag: "DATA" },
+          ].map((action, i) => (
+            <Card key={i} className="neon-border hover:shadow-glow transition-all duration-500 group cursor-pointer relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardHeader>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-gradient-primary rounded-xl p-3 shadow-button group-hover:scale-110 transition-transform duration-300">
+                    <action.icon className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <span className="text-[10px] font-mono font-semibold text-primary/70 tracking-widest border border-primary/20 px-2 py-0.5 rounded-full">{action.tag}</span>
+                </div>
+                <CardTitle className="font-display">{action.title}</CardTitle>
+                <CardDescription className="text-sm">{action.desc}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className={action.primary ? "w-full bg-gradient-primary hover:opacity-90 shadow-button font-semibold" : "w-full neon-border bg-transparent hover:bg-primary/10 text-foreground font-semibold"}>
+                  <Link to={action.link}>{action.label}</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Recent Reports */}
-        <Card className="shadow-card border-border">
+        <Card className="neon-border relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <CardTitle>Recent Reports</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-display">Recent Reports</CardTitle>
+                <CardDescription className="font-mono text-xs tracking-wider">
                   {totalReports > 0 ? `Showing ${recentReports.length} of ${totalReports} reports` : 'Your latest waste reports'}
                 </CardDescription>
               </div>
               {recentReports.length > 0 && (
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={exportToCSV}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
+                  <Button variant="outline" size="sm" onClick={exportToCSV} className="neon-border font-mono text-xs tracking-wider">
+                    <Download className="h-3.5 w-3.5 mr-1.5" />
+                    CSV
                   </Button>
-                  <Button variant="outline" size="sm" onClick={exportToPDF}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export PDF
+                  <Button variant="outline" size="sm" onClick={exportToPDF} className="neon-border font-mono text-xs tracking-wider">
+                    <Download className="h-3.5 w-3.5 mr-1.5" />
+                    PDF
                   </Button>
                 </div>
               )}
@@ -754,8 +742,10 @@ const Dashboard = () => {
           <CardContent>
             {isLoadingReports ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading reports...</p>
+                <div className="w-12 h-12 neon-border rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Scan className="h-6 w-6 text-primary animate-pulse" />
+                </div>
+                <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase">Loading reports...</p>
               </div>
             ) : recentReports.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
@@ -779,26 +769,27 @@ const Dashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentReports.map((report) => (
                   <Link
                     key={report.id}
                     to={`/report/${report.id}`}
-                    className="block"
+                    className="block group"
                   >
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between p-4 rounded-xl neon-border hover:bg-primary/5 transition-all duration-300 cursor-pointer relative overflow-hidden">
+                      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-foreground">
+                          <h4 className="font-display font-semibold text-foreground">
                             {report.waste_type || 'General Waste'}
                           </h4>
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold tracking-wider uppercase ${
                               report.status === 'resolved'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'
                                 : report.status === 'in_progress'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30'
+                                : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
                             }`}
                           >
                             {report.status === 'in_progress' ? 'In Progress' : report.status.charAt(0).toUpperCase() + report.status.slice(1)}
@@ -807,7 +798,7 @@ const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           {report.location_address || 'Location not specified'}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs font-mono text-muted-foreground/60 mt-1">
                           {new Date(report.created_at).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -817,7 +808,7 @@ const Dashboard = () => {
                           })}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm" className="ml-4">
+                      <Button variant="ghost" size="sm" className="ml-4 font-mono text-xs text-primary tracking-wider group-hover:translate-x-1 transition-transform">
                         Track →
                       </Button>
                     </div>
