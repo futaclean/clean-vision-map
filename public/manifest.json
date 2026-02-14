@@ -8,12 +8,12 @@
   "theme_color": "#0d9488",
   "icons": [
     {
-      "src": "/looo.png",
+      "src": "/logo-waste-track.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/looo.png",
+      "src": "/logo-waste-track.png",
       "sizes": "512x512",
       "type": "image/png"
     }
