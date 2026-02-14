@@ -3,10 +3,11 @@ import {
   MapPin, Camera, BarChart3, Users, Shield, 
   ArrowRight, ChevronRight, Globe, Zap, Target, 
   CheckCircle2, Sparkles, TrendingUp, Award, Download,
-  Eye, Brain, Cpu, Scan, Activity, Recycle
+  Eye, Brain, Cpu, Scan, Activity, Recycle, Sun, Moon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
+import { useTheme } from "next-themes";
 import heroImage from "@/assets/hero-waste-scan.jpg";
 import wasteMapImage from "@/assets/waste-map-overview.jpg";
 import beforeAfterImage from "@/assets/before-after-cleanup.jpg";
@@ -46,6 +47,7 @@ const useInView = (threshold = 0.2) => {
 };
 
 const Landing = () => {
+  const { theme, setTheme } = useTheme();
   const reports = useCounter(12400, 2500);
   const cleaned = useCounter(9800, 2500);
   const users = useCounter(3200, 2000);
@@ -101,6 +103,16 @@ const Landing = () => {
             <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle dark mode"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Sign In</Link>
             </Button>

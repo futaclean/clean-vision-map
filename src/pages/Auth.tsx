@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Leaf, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Scan, Fingerprint, ShieldCheck } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import logoImage from "/logo-waste-track.png?url";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -27,7 +27,6 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
-  // Redirect if already logged in
   if (user) {
     navigate('/dashboard');
     return null;
@@ -60,9 +59,7 @@ const Auth = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/auth`,
       });
-      
       if (error) throw error;
-      
       toast({
         title: "Password reset email sent",
         description: "Check your email for a password reset link",
@@ -80,311 +77,173 @@ const Auth = () => {
     }
   };
 
+  const inputClasses = "pl-10 bg-background/50 border-border/50 focus:border-primary focus:ring-primary/20 font-mono text-sm placeholder:text-muted-foreground/50";
+
+  const renderLoginForm = () => (
+    <form onSubmit={handleLogin} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="login-email" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+          <Input id="login-email" type="email" placeholder="your@email.com" className={inputClasses} value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="login-password" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+          <Input id="login-password" type="password" placeholder="••••••••" className={inputClasses} value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Button type="button" variant="link" className="text-xs font-mono text-primary p-0 h-auto tracking-wider" onClick={() => setShowForgotPassword(true)}>
+          Forgot password?
+        </Button>
+      </div>
+      <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90 shadow-button font-semibold text-sm tracking-wide" disabled={isLoading}>
+        {isLoading ? (
+          <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Authenticating...</span>
+        ) : (
+          <span className="flex items-center gap-2"><Fingerprint className="h-4 w-4" /> Sign In</span>
+        )}
+      </Button>
+    </form>
+  );
+
+  const renderResetForm = () => (
+    <form onSubmit={handlePasswordReset} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="reset-email" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+          <Input id="reset-email" type="email" placeholder="your@email.com" className={inputClasses} value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required />
+        </div>
+        <p className="text-xs font-mono text-muted-foreground/70">We'll send you a password reset link</p>
+      </div>
+      <div className="space-y-2">
+        <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90 shadow-button font-semibold" disabled={isLoading}>
+          {isLoading ? "Sending..." : "Send Reset Link"}
+        </Button>
+        <Button type="button" variant="outline" className="w-full neon-border" onClick={() => setShowForgotPassword(false)}>
+          Back to Login
+        </Button>
+      </div>
+    </form>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2djhoOHYtOGgtOHptMCAxNnY4aDh2LThoLTh6bS0xNiAwdjhoOHYtOGgtOHptMC0xNnY4aDh2LThoLTh6bTE2IDB2OGg4di04aC04eiIvPjwvZz48L2c+PC9zdmc+')] opacity-20" />
-      
-      <Button 
-        variant="ghost" 
-        asChild 
-        className="absolute top-4 left-4 text-white hover:bg-white/10 z-10"
-      >
-        <Link to="/">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Link>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-hero" />
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE2djhoOHYtOGgtOHptMCAxNnY4aDh2LThoLTh6bS0xNiAwdjhoOHYtOGgtOHptMC0xNnY4aDh2LThoLTh6bTE2IDB2OGg0di04aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
+      <div className="hero-glow w-[500px] h-[500px] -top-40 -right-40 opacity-15" />
+      <div className="hero-glow w-[400px] h-[400px] -bottom-40 -left-40 opacity-10" />
+
+      {/* Scan lines */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute left-0 right-0 h-px bg-primary/10 top-1/3 animate-pulse" />
+        <div className="absolute left-0 right-0 h-px bg-primary/5 top-2/3" />
+      </div>
+
+      {/* Back button */}
+      <Button variant="ghost" asChild className="absolute top-4 left-4 text-muted-foreground hover:text-foreground hover:bg-primary/10 z-10 font-mono text-xs tracking-wider">
+        <Link to="/"><ArrowLeft className="h-4 w-4 mr-2" /> HOME</Link>
       </Button>
 
-      <Card className="w-full max-w-md shadow-glow border-border/50 backdrop-blur-sm bg-card/95 relative z-10 animate-fade-in">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="bg-gradient-primary rounded-full p-3">
-              <Leaf className="h-6 w-6 text-white" />
+      {/* Auth Card */}
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
+        {/* Card */}
+        <div className="neon-border rounded-2xl bg-card/95 backdrop-blur-xl shadow-elevated overflow-hidden">
+          {/* Header */}
+          <div className="text-center pt-10 pb-6 px-8 relative">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative">
+                <img src={logoImage} alt="Waste-Track AI" className="h-16 w-16 rounded-xl shadow-button" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-display font-bold text-foreground mb-1">
+              {isStaffLogin
+                ? roleParam === 'cleaner' ? 'Cleaner Portal' : 'Admin Portal'
+                : 'Waste-Track AI'
+              }
+            </h1>
+            <p className="text-xs font-mono text-muted-foreground tracking-widest uppercase">
+              {isStaffLogin
+                ? `Authorized ${roleParam} access`
+                : 'Intelligent Waste Management'
+              }
+            </p>
+
+            {/* Security badge */}
+            <div className="inline-flex items-center gap-1.5 mt-4 bg-primary/10 neon-border px-3 py-1 rounded-full">
+              <ShieldCheck className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-mono text-primary tracking-wider uppercase">Secure Connection</span>
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold">
-            {isStaffLogin 
-              ? roleParam === 'cleaner' ? 'Cleaner Login' : 'Admin Login'
-              : 'Waste-Track AI'
-            }
-          </CardTitle>
-          <CardDescription>
-            {isStaffLogin 
-              ? `Sign in to your ${roleParam} account`
-              : 'Welcome to Smart Waste Reporting System'
-            }
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {isStaffLogin ? (
-            // Staff login only (no signup)
-            <div className="space-y-4">
-              {!showForgotPassword ? (
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="login-email" 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        className="pl-10"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="login-password" 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="pl-10"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="text-sm text-primary p-0 h-auto"
-                      onClick={() => setShowForgotPassword(true)}
-                    >
-                      Forgot password?
-                    </Button>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-primary hover:opacity-90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Signing in..." : "Sign In"}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handlePasswordReset} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="reset-email" 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        className="pl-10"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
+          {/* Form Content */}
+          <div className="px-8 pb-8">
+            {isStaffLogin ? (
+              <div className="space-y-4">
+                {!showForgotPassword ? renderLoginForm() : renderResetForm()}
+              </div>
+            ) : (
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50 p-1 rounded-xl">
+                  <TabsTrigger value="login" className="font-mono text-xs tracking-wider uppercase rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-button">Login</TabsTrigger>
+                  <TabsTrigger value="signup" className="font-mono text-xs tracking-wider uppercase rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-button">Sign Up</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="login">
+                  {!showForgotPassword ? renderLoginForm() : renderResetForm()}
+                </TabsContent>
+
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignup} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+                        <Input id="signup-name" type="text" placeholder="John Doe" className={inputClasses} value={signupName} onChange={(e) => setSignupName(e.target.value)} required />
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      We'll send you a password reset link
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-primary hover:opacity-90"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Sending..." : "Send Reset Link"}
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+                        <Input id="signup-email" type="email" placeholder="your@email.com" className={inputClasses} value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password" className="text-xs font-mono tracking-wider uppercase text-muted-foreground">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
+                        <Input id="signup-password" type="password" placeholder="••••••••" className={inputClasses} value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90 shadow-button font-semibold text-sm tracking-wide" disabled={isLoading}>
+                      {isLoading ? (
+                        <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Creating account...</span>
+                      ) : (
+                        <span className="flex items-center gap-2"><Scan className="h-4 w-4" /> Create Account</span>
+                      )}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowForgotPassword(false)}
-                    >
-                      Back to Login
-                    </Button>
-                  </div>
-                </form>
-              )}
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
+
+            <div className="mt-6 text-center">
+              <p className="text-[10px] font-mono text-muted-foreground/60 tracking-wider uppercase">By continuing, you agree to our Terms of Service</p>
             </div>
-          ) : (
-            // Regular user auth with tabs
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                {!showForgotPassword ? (
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="login-email" 
-                          type="email" 
-                          placeholder="your@email.com" 
-                          className="pl-10"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="login-password" 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="pl-10"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="text-sm text-primary p-0 h-auto"
-                        onClick={() => setShowForgotPassword(true)}
-                      >
-                        Forgot password?
-                      </Button>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-primary hover:opacity-90"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Signing in..." : "Sign In"}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handlePasswordReset} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="reset-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="reset-email" 
-                          type="email" 
-                          placeholder="your@email.com" 
-                          className="pl-10"
-                          value={resetEmail}
-                          onChange={(e) => setResetEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        We'll send you a password reset link
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-primary hover:opacity-90"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? "Sending..." : "Send Reset Link"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => setShowForgotPassword(false)}
-                      >
-                        Back to Login
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="signup-name" 
-                        type="text" 
-                        placeholder="John Doe" 
-                        className="pl-10"
-                        value={signupName}
-                        onChange={(e) => setSignupName(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="signup-email" 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        className="pl-10"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="signup-password" 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="pl-10"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-primary hover:opacity-90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Creating account..." : "Create Account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          )}
-          
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>By continuing, you agree to our Terms of Service</p>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Bottom accent line */}
+          <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        </div>
+      </div>
     </div>
   );
 };
