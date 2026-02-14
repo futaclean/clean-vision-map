@@ -1,21 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { 
-  MapPin, Leaf, Camera, BarChart3, Users, Shield, 
+  MapPin, Camera, BarChart3, Users, Shield, 
   ArrowRight, ChevronRight, Globe, Zap, Target, 
-  CheckCircle2, Sparkles, TrendingUp, Award, Download
+  CheckCircle2, Sparkles, TrendingUp, Award, Download,
+  Eye, Brain, Cpu, Scan, Activity, Recycle
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import splashImage from "@/assets/cleanfuta-splash.png";
+import { useEffect, useState, useRef } from "react";
+import heroImage from "@/assets/hero-waste-scan.jpg";
+import wasteMapImage from "@/assets/waste-map-overview.jpg";
+import beforeAfterImage from "@/assets/before-after-cleanup.jpg";
 
-// Animated counter hook (Unchanged)
+// Animated counter hook
 const useCounter = (end: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
     if (!started) return;
-    
     let startTime: number | null = null;
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
@@ -29,348 +31,341 @@ const useCounter = (end: number, duration: number = 2000) => {
   return { count, start: () => setStarted(true) };
 };
 
-const Landing = () => {
-  const reports = useCounter(2500, 2500);
-  const cleaned = useCounter(1800, 2500);
-  const users = useCounter(500, 2000);
-  const locations = useCounter(150, 1500);
-  
-  // 1. STATE TO HOLD PWA INSTALL EVENT
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  // --- START: PWA Service Worker Registration & Install Prompt Logic ---
+// Intersection observer hook for scroll animations
+const useInView = (threshold = 0.2) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
-    // Register the Service Worker
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true); }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+};
+
+const Landing = () => {
+  const reports = useCounter(12400, 2500);
+  const cleaned = useCounter(9800, 2500);
+  const users = useCounter(3200, 2000);
+  const accuracy = useCounter(97, 1500);
+  
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const statsSection = useInView(0.3);
+  const featuresSection = useInView(0.15);
+  const howItWorksSection = useInView(0.15);
+
+  useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('CleanFUTA PWA: Service Worker registered successfully:', registration.scope);
-        })
-        .catch(error => {
-          console.error('CleanFUTA PWA: Service Worker registration failed:', error);
-        });
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
-    // Capture the 'beforeinstallprompt' event
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault(); 
-      // Store the event so we can trigger the prompt later
-      setDeferredPrompt(e); 
-      console.log('PWA installation prompt captured.');
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Cleanup listener on unmount
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []); 
-
-  // Function to handle the manual install button click
   const handleInstallClick = () => {
     if (deferredPrompt) {
-      // Show the stored prompt
-      deferredPrompt.prompt(); 
-      // Wait for the user to respond
-      deferredPrompt.userChoice.then((choiceResult: { outcome: string; }) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the A2HS prompt');
-        } else {
-          console.log('User dismissed the A2HS prompt');
-        }
-        // Clear the stored prompt so the button disappears after first use
-        setDeferredPrompt(null); 
-      });
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
     }
   };
-  // --- END: PWA Service Worker Registration & Install Prompt Logic ---
 
-  // Counter Start Effect (Unchanged)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      reports.start();
-      cleaned.start();
-      users.start();
-      locations.start();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    if (statsSection.inView) {
+      reports.start(); cleaned.start(); users.start(); accuracy.start();
+    }
+  }, [statsSection.inView]);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
-              <Leaf className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                <Scan className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
             </div>
-            <span className="text-xl font-display font-bold text-foreground">CleanFUTA</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-display font-bold text-foreground leading-tight">Waste-Track AI</span>
+              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Intelligent Detection</span>
+            </div>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-            <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Impact</a>
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">How It Works</a>
+            <a href="#impact" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Impact</a>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Sign In</Link>
             </Button>
-            <Button size="sm" asChild className="shadow-button">
-              <Link to="/auth">Get Started</Link>
+            <Button size="sm" asChild className="shadow-button font-semibold">
+              <Link to="/auth">
+                Launch App
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
             </Button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - Full screen immersive */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="hero-glow w-[800px] h-[800px] -top-40 -right-40" />
-        <div className="hero-glow w-[600px] h-[600px] -bottom-20 -left-20 opacity-20" />
-        
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
+        {/* Background image with overlay */}
+        <div className="absolute inset-0">
+          <img src={heroImage} alt="AI waste detection technology" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
+        </div>
+
+        {/* Animated scan lines */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute left-0 right-0 h-px bg-primary/20 top-1/4 animate-pulse" />
+          <div className="absolute left-0 right-0 h-px bg-primary/10 top-2/4" style={{ animationDelay: "1s" }} />
+          <div className="absolute left-0 right-0 h-px bg-primary/20 top-3/4 animate-pulse" style={{ animationDelay: "2s" }} />
+        </div>
 
         <div className="container mx-auto px-4 py-20 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            {/* Left content */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20 animate-fade-in">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-                <span className="text-sm font-medium text-white/90">AI-Powered Campus Cleanliness</span>
-              </div>
-              
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                Transforming
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-200">
-                  Campus Waste
-                </span>
-                Management
-              </h1>
-              
-              <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed animate-fade-in" style={{ animationDelay: "0.2s" }}>
-                CleanFUTA empowers students, staff, and administrators to report, track, and resolve 
-                waste issues in real-time using cutting-edge AI technology.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                <Button size="lg" asChild className="bg-white text-primary hover:bg-white/95 shadow-elevated text-base px-8 h-12 font-semibold group">
-                  <Link to="/auth">
-                    Start Reporting
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </Button>
-                
-                {/* 2. CONDITIONAL PWA INSTALL BUTTON */}
-                {deferredPrompt && (
-                  <Button 
-                    size="lg" 
-                    variant="secondary" 
-                    onClick={handleInstallClick} 
-                    className="text-base px-8 h-12 font-semibold"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Install App
-                  </Button>
-                )}
-
-                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12 backdrop-blur-sm">
-                  <Link to="/auth?role=admin">Admin Portal</Link>
-                </Button>
-              </div>
-
-              {/* Stats row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-white/10 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-                {[
-                  { value: reports.count, suffix: "+", label: "Reports Filed" },
-                  { value: cleaned.count, suffix: "+", label: "Issues Resolved" },
-                  { value: users.count, suffix: "+", label: "Active Users" },
-                  { value: locations.count, suffix: "+", label: "Locations Mapped" },
-                ].map((stat, i) => (
-                  <div key={i} className="text-center lg:text-left">
-                    <div className="text-2xl sm:text-3xl font-display font-bold text-white">
-                      {stat.value.toLocaleString()}{stat.suffix}
-                    </div>
-                    <div className="text-sm text-white/60">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
+          <div className="max-w-3xl">
+            {/* Status badge */}
+            <div className="inline-flex items-center gap-2 neon-border bg-background/40 backdrop-blur-sm px-4 py-2 rounded-full mb-8 animate-fade-in">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <span className="text-xs font-mono text-primary tracking-wider uppercase">AI Detection Active</span>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs font-mono text-muted-foreground">v2.0</span>
             </div>
             
-            {/* Right - App mockup */}
-            <div className="flex-1 relative animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="relative max-w-md mx-auto">
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-accent/40 rounded-[3rem] blur-3xl animate-glow" />
-                
-                {/* Phone frame */}
-                <div className="relative glass-card rounded-[2.5rem] p-3 animate-float-slow">
-                  <img 
-                    src={splashImage} 
-                    alt="CleanFUTA App Interface" 
-                    className="w-full rounded-[2rem] shadow-2xl"
-                  />
-                </div>
-                
-                {/* Floating badges */}
-                <div className="absolute -left-8 top-1/4 glass-card rounded-2xl p-4 animate-float" style={{ animationDelay: "0.5s" }}>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-primary/20 rounded-xl p-2">
-                      <Camera className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">AI Detection</div>
-                      <div className="text-xs text-muted-foreground">Auto-classify waste</div>
-                    </div>
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-8xl font-bold text-foreground mb-6 leading-[1.05] animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              See Waste.
+              <br />
+              <span className="text-gradient">Scan It.</span>
+              <br />
+              <span className="text-muted-foreground/60">Track It.</span>
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-xl leading-relaxed animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              Waste-Track AI uses computer vision to detect, classify, and track waste in real-time. 
+              Report issues instantly. Watch them get resolved.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <Button size="lg" asChild className="shadow-button text-base px-8 h-14 font-semibold group relative overflow-hidden">
+                <Link to="/auth">
+                  <span className="relative z-10 flex items-center">
+                    Start Tracking
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Link>
+              </Button>
+              
+              {deferredPrompt && (
+                <Button size="lg" variant="secondary" onClick={handleInstallClick} className="text-base px-8 h-14 font-semibold">
+                  <Download className="mr-2 h-5 w-5" />
+                  Install App
+                </Button>
+              )}
+
+              <Button size="lg" variant="outline" asChild className="border-primary/30 text-foreground hover:bg-primary/10 text-base px-8 h-14 backdrop-blur-sm">
+                <a href="#how-it-works">See How It Works</a>
+              </Button>
+            </div>
+
+            {/* Mini stats */}
+            <div className="flex flex-wrap gap-8 mt-14 animate-fade-in" style={{ animationDelay: "0.5s" }}>
+              {[
+                { icon: Eye, label: "Reports Filed", value: "12K+" },
+                { icon: Brain, label: "AI Accuracy", value: "97%" },
+                { icon: Activity, label: "Avg Response", value: "< 2h" },
+              ].map((stat, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 neon-border">
+                    <stat.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-display font-bold text-foreground">{stat.value}</div>
+                    <div className="text-xs text-muted-foreground">{stat.label}</div>
                   </div>
                 </div>
-                
-                <div className="absolute -right-8 bottom-1/4 glass-card rounded-2xl p-4 animate-float" style={{ animationDelay: "1s" }}>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-primary/20 rounded-xl p-2">
-                      <MapPin className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">GPS Tracking</div>
-                      <div className="text-xs text-muted-foreground">Precise locations</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
-            <div className="w-1 h-2 bg-white/60 rounded-full animate-pulse" />
+          <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2">
+            <div className="w-1 h-2 bg-primary/60 rounded-full animate-pulse" />
           </div>
         </div>
       </section>
 
-      {/* --- Impact Section --- */}
-      <section id="impact" className="py-24 bg-background relative">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Real Impact</span>
+      {/* Scrolling tech ticker */}
+      <div className="relative bg-card border-y border-border overflow-hidden py-3">
+        <div className="flex animate-ticker whitespace-nowrap">
+          {[...Array(2)].map((_, setIdx) => (
+            <div key={setIdx} className="flex items-center gap-8 px-4">
+              {["Computer Vision", "Real-time GPS", "AI Classification", "Severity Detection", "Route Optimization", "Analytics Dashboard", "Push Notifications", "Offline Support"].map((t, i) => (
+                <span key={i} className="flex items-center gap-2 text-xs font-mono text-muted-foreground tracking-wider uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                  {t}
+                </span>
+              ))}
             </div>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-              Making a Measurable Difference
+          ))}
+        </div>
+      </div>
+
+      {/* Impact section with real numbers */}
+      <section id="impact" className="py-28 bg-background relative" ref={statsSection.ref}>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-primary/10 neon-border px-4 py-2 rounded-full mb-6">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-sm font-mono font-medium text-primary tracking-wider uppercase">Measurable Impact</span>
+            </div>
+            <h2 className="font-display text-4xl sm:text-6xl font-bold text-foreground mb-6">
+              Numbers That
+              <span className="text-gradient"> Matter</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our platform is transforming how campuses approach waste management
+              Real-time intelligence driving cleaner environments worldwide
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { 
-                icon: Target, 
-                value: "95%", 
-                label: "Resolution Rate",
-                desc: "Of reported issues resolved within 48 hours"
-              },
-              { 
-                icon: Globe, 
-                value: "40%", 
-                label: "Waste Reduction",
-                desc: "Decrease in campus waste accumulation"
-              },
-              { 
-                icon: Award, 
-                value: "#1", 
-                label: "In Innovation",
-                desc: "Leading campus sustainability solution in Nigeria"
-              },
-            ].map((item, i) => (
-              <div 
-                key={i}
-                className="group relative bg-gradient-card rounded-3xl p-8 border border-border hover:border-primary/50 hover:shadow-glow transition-all duration-500"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative">
-                  <div className="bg-primary/10 rounded-2xl p-4 w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <item.icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="text-5xl font-display font-bold text-foreground mb-2">
-                    {item.value}
-                  </div>
-                  <div className="text-lg font-semibold text-foreground mb-2">{item.label}</div>
-                  <p className="text-muted-foreground">{item.desc}</p>
+              { value: reports.count, suffix: "+", label: "Reports Filed", icon: Camera, desc: "Waste incidents documented" },
+              { value: cleaned.count, suffix: "+", label: "Issues Resolved", icon: CheckCircle2, desc: "Successfully cleaned up" },
+              { value: users.count, suffix: "+", label: "Active Users", icon: Users, desc: "Community members" },
+              { value: accuracy.count, suffix: "%", label: "AI Accuracy", icon: Brain, desc: "Detection precision" },
+            ].map((stat, i) => (
+              <div key={i} className={`group relative neon-border rounded-2xl p-8 bg-card hover:bg-primary/5 transition-all duration-500 ${statsSection.inView ? 'animate-fade-in' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.15}s` }}>
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <stat.icon className="h-8 w-8 text-primary mb-4" />
+                <div className="text-4xl sm:text-5xl font-display font-bold text-foreground mb-1">
+                  {stat.value.toLocaleString()}{stat.suffix}
                 </div>
+                <div className="text-sm font-semibold text-foreground mb-1">{stat.label}</div>
+                <p className="text-xs text-muted-foreground">{stat.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- Features Section --- */}
-      <section id="features" className="py-24 bg-muted/30 relative overflow-hidden">
+      {/* Visual showcase - Before/After + Map */}
+      <section className="py-28 bg-muted/30 relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Before/After image */}
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative neon-border rounded-2xl overflow-hidden">
+                <img src={beforeAfterImage} alt="Before and after waste cleanup powered by AI tracking" className="w-full" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="glass-card rounded-xl p-4">
+                    <div className="text-sm font-display font-semibold text-foreground">AI-Tracked Cleanup</div>
+                    <div className="text-xs text-muted-foreground">Report → Assign → Resolve in under 2 hours</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Waste heatmap */}
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-gradient-to-l from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative neon-border rounded-2xl overflow-hidden">
+                <img src={wasteMapImage} alt="Real-time waste hotspot map with AI detection" className="w-full" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="glass-card rounded-xl p-4">
+                    <div className="text-sm font-display font-semibold text-foreground">Live Waste Heatmap</div>
+                    <div className="text-xs text-muted-foreground">Real-time hotspot detection & monitoring</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-28 bg-background relative overflow-hidden" ref={featuresSection.ref}>
         <div className="hero-glow w-[600px] h-[600px] top-0 right-0 opacity-10" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Powerful Features</span>
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-primary/10 neon-border px-4 py-2 rounded-full mb-6">
+              <Cpu className="h-4 w-4 text-primary" />
+              <span className="text-sm font-mono font-medium text-primary tracking-wider uppercase">Core Capabilities</span>
             </div>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-              Everything You Need
+            <h2 className="font-display text-4xl sm:text-6xl font-bold text-foreground mb-6">
+              Built for
+              <span className="text-gradient"> Intelligence</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A comprehensive suite of tools designed for efficient campus waste management
+              Every feature is designed to make waste detection and management effortless
             </p>
-            </div>
+          </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                icon: Camera,
-                title: "AI Waste Detection",
-                description: "Upload photos and let AI automatically identify waste type, severity, and recommended actions"
+                icon: Scan,
+                title: "AI Waste Scanner",
+                description: "Point your camera at waste — AI instantly identifies type, severity, and recommended cleanup actions",
+                tag: "CORE"
               },
               {
                 icon: MapPin,
-                title: "Precise GPS Tracking",
-                description: "Automatic location capture with FUTA-specific landmarks for accurate waste hotspot mapping"
+                title: "GPS Precision",
+                description: "Automatic high-accuracy location capture with landmark-based mapping and hotspot detection",
+                tag: "TRACKING"
               },
               {
                 icon: BarChart3,
-                title: "Analytics Dashboard",
-                description: "Real-time insights, trends, and exportable reports for data-driven decision making"
+                title: "Live Analytics",
+                description: "Real-time dashboards with trend analysis, exportable reports, and predictive insights",
+                tag: "DATA"
               },
               {
                 icon: Users,
-                title: "Team Management",
-                description: "Efficiently assign, track, and manage cleanup tasks with your cleaning crew"
+                title: "Team Dispatch",
+                description: "Smart cleaner assignment with route optimization and real-time progress tracking",
+                tag: "OPS"
               },
               {
                 icon: Shield,
-                title: "Role-Based Access",
-                description: "Secure access control for students, cleaners, and administrators"
+                title: "Role Security",
+                description: "Granular access control for reporters, cleaners, and administrators with audit trails",
+                tag: "SECURITY"
               },
               {
-                icon: Leaf,
-                title: "Environmental Impact",
-                description: "Track your contributions and promote sustainable campus practices"
+                icon: Recycle,
+                title: "Impact Tracking",
+                description: "Measure environmental impact with waste volume tracking and sustainability metrics",
+                tag: "ESG"
               }
             ].map((feature, index) => (
               <div 
                 key={index}
-                className="group bg-card rounded-2xl p-6 shadow-card hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/30"
+                className={`group relative neon-border rounded-2xl p-8 bg-card hover:bg-primary/5 transition-all duration-500 ${featuresSection.inView ? 'animate-fade-in' : 'opacity-0'}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="bg-gradient-primary rounded-xl p-3 w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="h-6 w-6 text-primary-foreground" />
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-gradient-primary rounded-xl p-3 group-hover:scale-110 transition-transform duration-300 shadow-button">
+                    <feature.icon className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <span className="text-[10px] font-mono font-semibold text-primary/70 tracking-widest border border-primary/20 px-2 py-0.5 rounded-full">{feature.tag}</span>
                 </div>
-                <h3 className="text-lg font-display font-semibold text-card-foreground mb-2">
+                <h3 className="text-lg font-display font-semibold text-card-foreground mb-3">
                   {feature.title}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
@@ -382,50 +377,55 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- How It Works --- */}
-      <section id="how-it-works" className="py-24 bg-background">
+      {/* How It Works */}
+      <section id="how-it-works" className="py-28 bg-muted/30" ref={howItWorksSection.ref}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Simple Process</span>
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-primary/10 neon-border px-4 py-2 rounded-full mb-6">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-mono font-medium text-primary tracking-wider uppercase">3 Simple Steps</span>
             </div>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-              How It Works
+            <h2 className="font-display text-4xl sm:text-6xl font-bold text-foreground mb-6">
+              Report in
+              <span className="text-gradient"> Seconds</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Report waste issues in seconds and watch them get resolved
+              From spotting waste to tracking cleanup — all in one seamless flow
             </p>
-            </div>
+          </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8 relative">
               {/* Connection line */}
-              <div className="hidden md:block absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+              <div className="hidden md:block absolute top-20 left-[20%] right-[20%] h-px bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
               
               {[
                 {
                   step: "01",
-                  title: "Spot & Snap",
-                  desc: "See waste? Take a photo with your phone. Our AI will automatically detect the type and severity."
+                  icon: Camera,
+                  title: "Scan & Detect",
+                  desc: "Point your camera at waste. Our AI instantly classifies the type, assesses severity, and prepares your report."
                 },
                 {
                   step: "02",
-                  title: "Submit Report",
-                  desc: "Your location is captured automatically. Add a description and submit in seconds."
+                  icon: MapPin,
+                  title: "Auto-Submit",
+                  desc: "GPS location is captured automatically. Add a note if you want, then submit with one tap."
                 },
                 {
                   step: "03",
-                  title: "Track Progress",
-                  desc: "Get notified when your report is assigned to a cleaner and when it's resolved."
+                  icon: CheckCircle2,
+                  title: "Track & Resolve",
+                  desc: "Watch in real-time as cleaners are dispatched. Get notified when the area is clean again."
                 }
               ].map((item, i) => (
-                <div key={i} className="relative text-center">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-button relative z-10">
-                    <span className="text-lg font-bold text-primary-foreground">{item.step}</span>
+                <div key={i} className={`relative text-center ${howItWorksSection.inView ? 'animate-fade-in' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.2}s` }}>
+                  <div className="w-16 h-16 neon-border bg-card rounded-2xl flex items-center justify-center mx-auto mb-6 relative z-10 group-hover:scale-110 transition-transform">
+                    <item.icon className="h-7 w-7 text-primary" />
                   </div>
+                  <div className="text-xs font-mono text-primary/60 tracking-widest mb-2">STEP {item.step}</div>
                   <h3 className="text-xl font-display font-semibold text-foreground mb-3">{item.title}</h3>
-                  <p className="text-muted-foreground">{item.desc}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -433,43 +433,49 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- Testimonials / Social Proof --- */}
-      <section className="py-24 bg-gradient-hero relative overflow-hidden">
+      {/* Testimonials */}
+      <section className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-hero" />
         <div className="hero-glow w-[600px] h-[600px] -bottom-40 -left-40 opacity-20" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-white mb-4">
-              Trusted by FUTA Community
+              Trusted by Communities
             </h2>
-            <p className="text-lg text-white/70 max-w-2xl mx-auto">
-              Join hundreds of students and staff making a difference
+            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+              Real feedback from people making a real difference
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                quote: "CleanFUTA has made reporting so easy. I can now contribute to keeping our campus clean with just a few taps!",
+                quote: "Waste-Track AI makes reporting so intuitive. I just snap a photo and the AI does the rest. It's genuinely changed how I think about waste.",
                 author: "Adebayo O.",
-                role: "400L Student, SEET"
+                role: "Community Member"
               },
               {
-                quote: "As a cleaner, this app helps me prioritize and navigate to waste locations efficiently. Game changer!",
+                quote: "The route optimization alone saves me hours each day. I can see exactly where to go and what to prioritize. Total game changer.",
                 author: "Musa K.",
-                role: "Campus Cleaner"
+                role: "Operations Lead"
               },
               {
-                quote: "The analytics dashboard gives us real insights into campus cleanliness trends. Essential for planning.",
+                quote: "The analytics give us actionable insights we never had before. We've reduced waste accumulation by 40% in just 3 months.",
                 author: "Dr. Ajayi",
-                role: "Facilities Manager"
+                role: "Facilities Director"
               }
             ].map((testimonial, i) => (
-              <div key={i} className="glass-card rounded-2xl p-6">
-                <p className="text-foreground/90 mb-4 italic">"{testimonial.quote}"</p>
+              <div key={i} className="neon-border rounded-2xl p-8 bg-card/10 backdrop-blur-lg">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, s) => (
+                    <Sparkles key={s} className="h-4 w-4 text-primary" />
+                  ))}
+                </div>
+                <p className="text-white/80 mb-6 leading-relaxed">"{testimonial.quote}"</p>
                 <div>
-                  <div className="font-semibold text-foreground">{testimonial.author}</div>
-                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                  <div className="font-display font-semibold text-white">{testimonial.author}</div>
+                  <div className="text-sm text-white/50 font-mono">{testimonial.role}</div>
                 </div>
               </div>
             ))}
@@ -477,46 +483,56 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- CTA Section --- */}
-      <section className="py-24 bg-background">
+      {/* CTA Section */}
+      <section className="py-28 bg-background relative">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Ready to Make Your Campus
-              <span className="text-gradient"> Cleaner?</span>
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join CleanFUTA today and be part of the movement towards a sustainable campus
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="shadow-button text-base px-10 h-14 font-semibold group">
-                <Link to="/auth">
-                  Get Started for Free
-                  <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild className="text-base px-10 h-14">
-                <Link to="/auth?role=cleaner">Cleaner Portal</Link>
-              </Button>
+          <div className="max-w-4xl mx-auto text-center relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-3xl blur-3xl" />
+            <div className="relative neon-border rounded-3xl p-12 sm:p-16 bg-card">
+              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-mono font-medium text-primary tracking-wider uppercase">Get Started Free</span>
+              </div>
+              <h2 className="font-display text-4xl sm:text-6xl font-bold text-foreground mb-6">
+                Ready to Track
+                <span className="text-gradient"> Smarter?</span>
+              </h2>
+              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                Join thousands of users using AI to build cleaner, healthier communities
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" asChild className="shadow-button text-base px-10 h-14 font-semibold group">
+                  <Link to="/auth">
+                    Launch Waste-Track AI
+                    <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="text-base px-10 h-14 border-primary/30">
+                  <Link to="/auth?role=admin">Admin Portal</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- Footer --- */}
-      <footer className="bg-card border-t border-border py-12">
+      {/* Footer */}
+      <footer className="bg-card border-t border-border py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2.5 mb-4">
                 <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
-                  <Leaf className="h-5 w-5 text-primary-foreground" />
+                  <Scan className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-display font-bold text-foreground">CleanFUTA</span>
+                <div>
+                  <span className="text-xl font-display font-bold text-foreground">Waste-Track AI</span>
+                  <div className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Intelligent Detection</div>
+                </div>
               </div>
-              <p className="text-muted-foreground max-w-sm mb-4">
-                Transforming campus waste management through technology. 
-                Making FUTA cleaner, one report at a time.
+              <p className="text-muted-foreground max-w-sm mb-6">
+                AI-powered waste detection and management platform. 
+                Building cleaner communities through intelligent tracking.
               </p>
               <div className="flex gap-4">
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -526,30 +542,30 @@ const Landing = () => {
             </div>
             
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors">How It Works</a></li>
-                <li><a href="#impact" className="text-muted-foreground hover:text-primary transition-colors">Our Impact</a></li>
+              <h4 className="font-display font-semibold text-foreground mb-4">Platform</h4>
+              <ul className="space-y-3">
+                <li><a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="text-sm text-muted-foreground hover:text-primary transition-colors">How It Works</a></li>
+                <li><a href="#impact" className="text-sm text-muted-foreground hover:text-primary transition-colors">Impact</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Get Started</h4>
-              <ul className="space-y-2">
-                <li><Link to="/auth" className="text-muted-foreground hover:text-primary transition-colors">Sign Up</Link></li>
-                <li><Link to="/auth?role=cleaner" className="text-muted-foreground hover:text-primary transition-colors">Cleaner Portal</Link></li>
-                <li><Link to="/auth?role=admin" className="text-muted-foreground hover:text-primary transition-colors">Admin Portal</Link></li>
+              <h4 className="font-display font-semibold text-foreground mb-4">Access</h4>
+              <ul className="space-y-3">
+                <li><Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">Sign Up</Link></li>
+                <li><Link to="/auth?role=cleaner" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cleaner Portal</Link></li>
+                <li><Link to="/auth?role=admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">Admin Portal</Link></li>
               </ul>
             </div>
           </div>
           
           <div className="pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2025 CleanFUTA. All rights reserved.
+            <p className="text-xs font-mono text-muted-foreground">
+              © 2025 Waste-Track AI. All rights reserved.
             </p>
-            <p className="text-sm text-muted-foreground">
-              Proudly built for Federal University of Technology, Akure
+            <p className="text-xs font-mono text-muted-foreground">
+              Powered by Computer Vision & Machine Learning
             </p>
           </div>
         </div>

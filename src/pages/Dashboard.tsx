@@ -494,7 +494,7 @@ const Dashboard = () => {
               <div className="bg-white rounded-full p-2">
                 <Leaf className="h-5 w-5 text-primary" />
               </div>
-              <span className="text-xl font-bold text-white">CleanFUTA</span>
+              <span className="text-xl font-bold text-white">Waste-Track AI</span>
             </div>
             
             <nav className="hidden md:flex items-center gap-6">

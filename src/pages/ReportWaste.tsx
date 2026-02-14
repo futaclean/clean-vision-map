@@ -62,7 +62,7 @@ const ReportWaste = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'CleanFUTA-Waste-Management-App'
+            'User-Agent': 'Waste-Track-AI-App'
           }
         }
       );
@@ -437,7 +437,7 @@ const ReportWaste = () => {
               <div className="bg-white rounded-full p-2">
                 <Leaf className="h-5 w-5 text-primary" />
               </div>
-              <span className="text-xl font-bold text-white hidden sm:inline">CleanFUTA</span>
+              <span className="text-xl font-bold text-white hidden sm:inline">Waste-Track AI</span>
             </div>
           </div>
         </div>

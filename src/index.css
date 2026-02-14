@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,9 +19,9 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 160 30% 10%;
 
-    --primary: 152 82% 38%;
+    --primary: 166 72% 34%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 152 82% 50%;
+    --primary-glow: 166 82% 50%;
 
     --secondary: 152 30% 92%;
     --secondary-foreground: 160 30% 10%;
@@ -29,7 +29,7 @@ All colors MUST be HSL.
     --muted: 160 15% 96%;
     --muted-foreground: 160 10% 45%;
 
-    --accent: 152 70% 45%;
+    --accent: 166 70% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -37,22 +37,23 @@ All colors MUST be HSL.
 
     --border: 160 20% 90%;
     --input: 160 20% 90%;
-    --ring: 152 82% 38%;
+    --ring: 166 72% 34%;
 
     --radius: 0.75rem;
     
     /* Premium gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(152 82% 38%) 0%, hsl(160 75% 45%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(152 82% 32%) 0%, hsl(170 70% 22%) 50%, hsl(180 60% 18%) 100%);
-    --gradient-card: linear-gradient(135deg, hsla(152 82% 38% / 0.03) 0%, hsla(160 75% 45% / 0.08) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(166 72% 34%) 0%, hsl(180 60% 40%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(180 40% 8%) 0%, hsl(166 50% 10%) 50%, hsl(150 30% 6%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(166 72% 34% / 0.03) 0%, hsla(180 60% 40% / 0.08) 100%);
     --gradient-glass: linear-gradient(135deg, hsla(0 0% 100% / 0.9) 0%, hsla(0 0% 100% / 0.7) 100%);
     --gradient-shine: linear-gradient(90deg, transparent, hsla(0 0% 100% / 0.4), transparent);
     
     /* Premium shadows */
-    --shadow-glow: 0 8px 40px hsla(152 82% 38% / 0.25);
-    --shadow-card: 0 4px 24px hsla(160 30% 20% / 0.06);
-    --shadow-elevated: 0 20px 60px hsla(160 30% 20% / 0.12);
-    --shadow-button: 0 4px 14px hsla(152 82% 38% / 0.35);
+    --shadow-glow: 0 8px 40px hsla(166 72% 34% / 0.25);
+    --shadow-card: 0 4px 24px hsla(180 30% 20% / 0.06);
+    --shadow-elevated: 0 20px 60px hsla(180 30% 20% / 0.12);
+    --shadow-button: 0 4px 14px hsla(166 72% 34% / 0.35);
+    --shadow-neon: 0 0 30px hsla(166 72% 50% / 0.4), 0 0 60px hsla(166 72% 50% / 0.2);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -74,9 +75,9 @@ All colors MUST be HSL.
     --popover: 160 20% 10%;
     --popover-foreground: 152 15% 95%;
 
-    --primary: 152 75% 45%;
+    --primary: 166 65% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 152 75% 55%;
+    --primary-glow: 166 75% 55%;
 
     --secondary: 160 15% 18%;
     --secondary-foreground: 152 15% 95%;
@@ -84,7 +85,7 @@ All colors MUST be HSL.
     --muted: 160 15% 18%;
     --muted-foreground: 152 10% 55%;
 
-    --accent: 152 75% 45%;
+    --accent: 166 75% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -92,17 +93,18 @@ All colors MUST be HSL.
 
     --border: 160 15% 18%;
     --input: 160 15% 18%;
-    --ring: 152 75% 45%;
+    --ring: 166 75% 45%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(152 75% 35%) 0%, hsl(160 70% 42%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(152 75% 28%) 0%, hsl(170 60% 15%) 50%, hsl(180 50% 10%) 100%);
-    --gradient-card: linear-gradient(135deg, hsla(152 75% 45% / 0.08) 0%, hsla(160 70% 35% / 0.12) 100%);
-    --gradient-glass: linear-gradient(135deg, hsla(160 20% 12% / 0.9) 0%, hsla(160 20% 8% / 0.7) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(166 65% 35%) 0%, hsl(180 60% 42%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(180 40% 6%) 0%, hsl(166 50% 8%) 50%, hsl(150 30% 5%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(166 75% 45% / 0.08) 0%, hsla(180 60% 35% / 0.12) 100%);
+    --gradient-glass: linear-gradient(135deg, hsla(180 20% 12% / 0.9) 0%, hsla(180 20% 8% / 0.7) 100%);
     
-    --shadow-glow: 0 8px 40px hsla(152 75% 45% / 0.3);
+    --shadow-glow: 0 8px 40px hsla(166 75% 45% / 0.3);
     --shadow-card: 0 4px 24px hsla(0 0% 0% / 0.3);
     --shadow-elevated: 0 20px 60px hsla(0 0% 0% / 0.4);
-    --shadow-button: 0 4px 14px hsla(152 75% 45% / 0.4);
+    --shadow-button: 0 4px 14px hsla(166 75% 45% / 0.4);
+    --shadow-neon: 0 0 30px hsla(166 75% 55% / 0.4), 0 0 60px hsla(166 75% 55% / 0.2);
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -139,6 +141,16 @@ All colors MUST be HSL.
     @apply absolute rounded-full blur-3xl opacity-30;
     background: radial-gradient(circle, hsl(var(--primary-glow)) 0%, transparent 70%);
   }
+
+  .neon-border {
+    border: 1px solid hsla(166, 72%, 50%, 0.3);
+    box-shadow: inset 0 0 20px hsla(166, 72%, 50%, 0.05), 0 0 20px hsla(166, 72%, 50%, 0.1);
+  }
+
+  .scan-line {
+    background: linear-gradient(180deg, transparent, hsla(166, 72%, 50%, 0.3), transparent);
+    animation: scan 2s ease-in-out infinite;
+  }
 }
 
 @keyframes shine {
@@ -152,6 +164,16 @@ All colors MUST be HSL.
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsla(152, 82%, 38%, 0.3); }
-  50% { box-shadow: 0 0 40px hsla(152, 82%, 38%, 0.6); }
+  0%, 100% { box-shadow: 0 0 20px hsla(166, 72%, 38%, 0.3); }
+  50% { box-shadow: 0 0 40px hsla(166, 72%, 38%, 0.6); }
+}
+
+@keyframes scan {
+  0%, 100% { transform: translateY(-100%); }
+  50% { transform: translateY(100%); }
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
