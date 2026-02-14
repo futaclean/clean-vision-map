@@ -1,11 +1,11 @@
 {
-  "name": "CleanFUTA: Smart Waste Reporting",
-  "short_name": "CleanFUTA",
-  "description": "Transforming FUTA campus waste management through AI and real-time reporting.",
+  "name": "Waste-Track AI: Intelligent Waste Management",
+  "short_name": "Waste-Track AI",
+  "description": "AI-powered waste detection, tracking, and management platform.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1f2937",
-  "theme_color": "#059669",
+  "background_color": "#0a0f0d",
+  "theme_color": "#0d9488",
   "icons": [
     {
       "src": "/looo.png",

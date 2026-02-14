@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.user) {
         toast({
           title: "Account created!",
-          description: "Welcome to CleanFUTA",
+          description: "Welcome to Waste-Track AI",
         });
         navigate('/dashboard');
       }

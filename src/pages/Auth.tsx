@@ -105,7 +105,7 @@ const Auth = () => {
           <CardTitle className="text-3xl font-bold">
             {isStaffLogin 
               ? roleParam === 'cleaner' ? 'Cleaner Login' : 'Admin Login'
-              : 'CleanFUTA'
+              : 'Waste-Track AI'
             }
           </CardTitle>
           <CardDescription>
