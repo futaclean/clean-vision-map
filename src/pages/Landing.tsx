@@ -3,11 +3,13 @@ import {
   MapPin, Camera, BarChart3, Users, Shield, 
   ArrowRight, ChevronRight, Globe, Zap, Target, 
   CheckCircle2, Sparkles, TrendingUp, Award, Download,
-  Eye, Brain, Cpu, Scan, Activity, Recycle, Sun, Moon
+  Eye, Brain, Cpu, Scan, Activity, Recycle, Sun, Moon,
+  Home, LogIn, Layers
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useTheme } from "next-themes";
+import { MobileNav } from "@/components/MobileNav";
 import heroImage from "@/assets/hero-waste-scan.jpg";
 import wasteMapImage from "@/assets/waste-map-overview.jpg";
 import beforeAfterImage from "@/assets/before-after-cleanup.jpg";
@@ -116,12 +118,28 @@ const Landing = () => {
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Sign In</Link>
             </Button>
-            <Button size="sm" asChild className="shadow-button font-semibold">
+            <Button size="sm" asChild className="shadow-button font-semibold hidden sm:inline-flex">
               <Link to="/auth">
                 Launch App
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>
             </Button>
+            <MobileNav
+              links={[
+                { label: "Home", to: "/", icon: <Home className="h-4 w-4" /> },
+                { label: "Features", to: "#features", icon: <Layers className="h-4 w-4" />, isAnchor: true },
+                { label: "How It Works", to: "#how-it-works", icon: <Zap className="h-4 w-4" />, isAnchor: true },
+                { label: "Impact", to: "#impact", icon: <TrendingUp className="h-4 w-4" />, isAnchor: true },
+              ]}
+              actions={
+                <Button asChild className="w-full shadow-button font-semibold">
+                  <Link to="/auth">
+                    Launch App
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
           </div>
         </div>
       </nav>
