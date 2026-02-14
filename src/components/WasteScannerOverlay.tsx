@@ -10,12 +10,13 @@ interface ScanResult {
   reason: string;
   suggestedWasteType?: string | null;
   wasteDescription?: string | null;
+  suggestedSeverity?: string | null;
 }
 
 interface WasteScannerOverlayProps {
   imageUrl: string;
   isScanning: boolean;
-  onVerified: (suggestedWasteType?: string, wasteDescription?: string) => void;
+  onVerified: (suggestedWasteType?: string, wasteDescription?: string, suggestedSeverity?: string) => void;
   onRejected: (reason: string) => void;
 }
 
@@ -41,6 +42,7 @@ const WasteScannerOverlay = ({
   const [rejectionReason, setRejectionReason] = useState('');
   const [detectedWasteType, setDetectedWasteType] = useState<string | null>(null);
   const [wasteDescription, setWasteDescription] = useState<string | null>(null);
+  const [detectedSeverity, setDetectedSeverity] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isScanning) {
@@ -51,6 +53,7 @@ const WasteScannerOverlay = ({
       setRejectionReason('');
       setDetectedWasteType(null);
       setWasteDescription(null);
+      setDetectedSeverity(null);
       return;
     }
 
@@ -70,6 +73,7 @@ const WasteScannerOverlay = ({
             setScanResult('verified');
             setDetectedWasteType(data.suggestedWasteType || null);
             setWasteDescription(data.wasteDescription || null);
+            setDetectedSeverity(data.suggestedSeverity || null);
           } else {
             setScanResult('rejected');
             setRejectionReason(data.reason || 'Image does not appear to contain waste');
@@ -121,26 +125,33 @@ const WasteScannerOverlay = ({
     if (showResult && scanResult) {
       const timer = setTimeout(() => {
         if (scanResult === 'verified') {
-          onVerified(detectedWasteType || undefined, wasteDescription || undefined);
+          onVerified(detectedWasteType || undefined, wasteDescription || undefined, detectedSeverity || undefined);
         } else {
           onRejected(rejectionReason);
         }
-      }, scanResult === 'verified' ? 2000 : 2500);
+    }, scanResult === 'verified' ? 2000 : 2500);
       return () => clearTimeout(timer);
     }
-  }, [showResult, scanResult, onVerified, onRejected, rejectionReason, detectedWasteType, wasteDescription]);
+  }, [showResult, scanResult, onVerified, onRejected, rejectionReason, detectedWasteType, wasteDescription, detectedSeverity]);
 
   if (!isScanning && !showResult) return null;
+
+  const severityLabels: Record<string, { label: string; color: string; icon: string }> = {
+    low: { label: 'Low Severity', color: 'bg-green-600', icon: '🟢' },
+    medium: { label: 'Medium Severity', color: 'bg-amber-500', icon: '🟡' },
+    high: { label: 'High Severity', color: 'bg-red-600', icon: '🔴' },
+  };
 
   const phaseMessages = {
     initializing: 'Initializing AI Scanner...',
     analyzing: 'Analyzing image content...',
     classifying: 'Classifying waste type...',
-    verifying: 'Verifying detection...',
+    verifying: 'Assessing severity...',
     complete: scanResult === 'verified' ? 'Waste Detected!' : 'Verification Failed'
   };
 
   const typeInfo = detectedWasteType ? wasteTypeLabels[detectedWasteType] : null;
+  const severityInfo = detectedSeverity ? severityLabels[detectedSeverity] : null;
 
   return (
     <AnimatePresence>
@@ -282,18 +293,25 @@ const WasteScannerOverlay = ({
                     )}
                   </motion.div>
 
-                  {/* Waste Type Badge on successful scan */}
-                  {scanResult === 'verified' && typeInfo && (
+                  {/* Waste Type & Severity Badges on successful scan */}
+                  {scanResult === 'verified' && (typeInfo || severityInfo) && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
-                      className="mt-4"
+                      className="mt-4 flex flex-col items-center gap-2"
                     >
-                      <Badge className={`${typeInfo.color} text-white text-sm px-4 py-2 shadow-lg`}>
-                        <Tag className="w-4 h-4 mr-2" />
-                        {typeInfo.label}
-                      </Badge>
+                      {typeInfo && (
+                        <Badge className={`${typeInfo.color} text-white text-sm px-4 py-2 shadow-lg`}>
+                          <Tag className="w-4 h-4 mr-2" />
+                          {typeInfo.label}
+                        </Badge>
+                      )}
+                      {severityInfo && (
+                        <Badge className={`${severityInfo.color} text-white text-sm px-4 py-2 shadow-lg`}>
+                          {severityInfo.icon} {severityInfo.label}
+                        </Badge>
+                      )}
                     </motion.div>
                   )}
                 </motion.div>
@@ -344,14 +362,14 @@ const WasteScannerOverlay = ({
                         {wasteDescription}
                       </motion.p>
                     )}
-                    {typeInfo && (
+                    {(typeInfo || severityInfo) && (
                       <motion.p 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
                         className="text-xs text-primary font-medium"
                       >
-                        Auto-selecting: {typeInfo.label}
+                        Auto-selecting: {[typeInfo?.label, severityInfo?.label].filter(Boolean).join(' • ')}
                       </motion.p>
                     )}
                   </div>
