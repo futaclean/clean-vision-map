@@ -70,12 +70,18 @@ WASTE TYPE CATEGORIES (choose the best match):
 - "mixed" - Multiple types of waste mixed together
 - "other" - Anything that doesn't fit above categories
 
+SEVERITY LEVELS (assess based on volume, health risk, and environmental impact):
+- "low" - Small amount of waste, minimal health risk, easy to clean up (e.g. a few pieces of litter, a single bottle)
+- "medium" - Moderate amount of waste, some health concern, requires effort to clean (e.g. a pile of trash, overflowing bin)
+- "high" - Large amount of waste, significant health/environmental hazard, urgent cleanup needed (e.g. illegal dumping, hazardous materials, large debris piles)
+
 Respond with a JSON object containing:
 - "isWaste": boolean (true if the image shows waste that should be reported)
 - "confidence": number (0-100)
 - "reason": string (brief explanation)
 - "wasteType": string (one of: plastic, paper, food, hazardous, mixed, other)
 - "wasteDescription": string (brief description of what waste was detected, e.g. "Plastic bottles and bags near a drain")
+- "severity": string (one of: low, medium, high)
 
 Be strict but fair. If there's visible waste in the image, accept it and categorize it accurately.`
           },
@@ -170,13 +176,18 @@ Be strict but fair. If there's visible waste in the image, accept it and categor
     const validWasteTypes = ['plastic', 'paper', 'food', 'hazardous', 'mixed', 'other'];
     const suggestedType = validWasteTypes.includes(result.wasteType) ? result.wasteType : 'mixed';
 
+    // Validate severity
+    const validSeverities = ['low', 'medium', 'high'];
+    const suggestedSeverity = validSeverities.includes(result.severity) ? result.severity : 'medium';
+
     return new Response(
       JSON.stringify({
         verified: result.isWaste === true,
         confidence: result.confidence || 50,
         reason: result.reason || (result.isWaste ? "Waste verified" : "No waste detected in image"),
         suggestedWasteType: result.isWaste ? suggestedType : null,
-        wasteDescription: result.isWaste ? (result.wasteDescription || null) : null
+        wasteDescription: result.isWaste ? (result.wasteDescription || null) : null,
+        suggestedSeverity: result.isWaste ? suggestedSeverity : null
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -15,7 +15,7 @@ import SubmissionProgress from "@/components/SubmissionProgress";
 import Confetti from "@/components/Confetti";
 import FUTALocationPicker from "@/components/FUTALocationPicker";
 import WasteScannerOverlay from "@/components/WasteScannerOverlay";
-import { VALID_WASTE_TYPES, isValidWasteType } from "@/lib/constants";
+import { VALID_WASTE_TYPES, VALID_SEVERITY_LEVELS, isValidWasteType, isValidSeverity } from "@/lib/constants";
 import { hapticSuccess, hapticError, hapticLight, hapticMedium } from "@/lib/haptics";
 import { getFUTALocationName, FUTALandmark } from "@/lib/futaLocations";
 
@@ -28,6 +28,7 @@ const ReportWaste = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationAddress, setLocationAddress] = useState("");
   const [wasteType, setWasteType] = useState("");
+  const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [submissionStep, setSubmissionStep] = useState<'location' | 'uploading' | 'saving' | 'complete' | null>(null);
@@ -278,14 +279,25 @@ const ReportWaste = () => {
     setIsScanning(true);
   };
 
-  const handleScanVerified = async (suggestedWasteType?: string, wasteDescription?: string) => {
+  const handleScanVerified = async (suggestedWasteType?: string, wasteDescription?: string, suggestedSeverity?: string) => {
     // Auto-fill waste type if suggested by AI
     if (suggestedWasteType && isValidWasteType(suggestedWasteType)) {
       setWasteType(suggestedWasteType);
+    }
+
+    // Auto-fill severity if suggested by AI
+    if (suggestedSeverity && isValidSeverity(suggestedSeverity)) {
+      setSeverity(suggestedSeverity);
+    }
+
+    if (suggestedWasteType || suggestedSeverity) {
       hapticLight();
+      const parts = [];
+      if (suggestedWasteType) parts.push(`${suggestedWasteType.charAt(0).toUpperCase() + suggestedWasteType.slice(1)} waste`);
+      if (suggestedSeverity) parts.push(`${suggestedSeverity} severity`);
       toast({
-        title: "Waste type detected",
-        description: `AI detected: ${suggestedWasteType.charAt(0).toUpperCase() + suggestedWasteType.slice(1)} waste`,
+        title: "AI Detection Complete",
+        description: `Detected: ${parts.join(' • ')}`,
       });
     }
 
@@ -325,6 +337,7 @@ const ReportWaste = () => {
           location_lng: location.lng,
           location_address: locationAddress,
           waste_type: wasteType,
+          severity: severity || null,
           description: description ? description.trim() : null,
           status: "pending",
         });
@@ -347,6 +360,7 @@ const ReportWaste = () => {
       setImageFile(null);
       setImagePreview("");
       setWasteType("");
+      setSeverity("");
       setDescription("");
       
       // Redirect to dashboard after showing success
@@ -603,6 +617,26 @@ const ReportWaste = () => {
                     {VALID_WASTE_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>
                         {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Severity Level */}
+              <div className="space-y-2">
+                <Label htmlFor="severity">Severity Level</Label>
+                <Select value={severity} onValueChange={(value) => {
+                  setSeverity(value);
+                  hapticLight();
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Auto-detected or select manually" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VALID_SEVERITY_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level === 'low' ? '🟢' : level === 'medium' ? '🟡' : '🔴'} {level.charAt(0).toUpperCase() + level.slice(1)}
                       </SelectItem>
                     ))}
                   </SelectContent>
