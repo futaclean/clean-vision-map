@@ -119,7 +119,7 @@ const Landing = () => {
               <Link to="/auth">Sign In</Link>
             </Button>
             <Button size="sm" asChild className="shadow-button font-semibold hidden sm:inline-flex">
-              <Link to="/auth">
+              <Link to="/demo">
                 Launch App
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>
@@ -133,7 +133,7 @@ const Landing = () => {
               ]}
               actions={
                 <Button asChild className="w-full shadow-button font-semibold">
-                  <Link to="/auth">
+                  <Link to="/demo">
                     Launch App
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Link>
@@ -185,7 +185,7 @@ const Landing = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Button size="lg" asChild className="shadow-button text-base px-8 h-14 font-semibold group relative overflow-hidden">
-                <Link to="/auth">
+                <Link to="/demo">
                   <span className="relative z-10 flex items-center">
                     Start Tracking
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -532,7 +532,7 @@ const Landing = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" asChild className="shadow-button text-base px-10 h-14 font-semibold group">
-                  <Link to="/auth">
+                  <Link to="/demo">
                     Launch Waste-Track AI
                     <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>

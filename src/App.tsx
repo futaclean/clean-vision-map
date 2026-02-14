@@ -11,6 +11,7 @@ import AnimatedPage from "@/components/AnimatedPage";
 import SplashScreen from "@/components/SplashScreen";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import Landing from "./pages/Landing";
+import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -30,6 +31,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<AnimatedPage><Landing /></AnimatedPage>} />
+        <Route path="/demo" element={<Demo />} />
         <Route path="/auth" element={<AnimatedPage><Auth /></AnimatedPage>} />
         <Route path="/dashboard" element={<AnimatedPage><Dashboard /></AnimatedPage>} />
         <Route path="/report" element={<AnimatedPage><ReportWaste /></AnimatedPage>} />
