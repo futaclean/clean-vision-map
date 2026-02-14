@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload, Navigation } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, Users, ClipboardList, UserCheck, Eye, Trash2, BarChart3, TrendingUp, Map, CheckSquare, Square, Download, CalendarIcon, Search, Save, X, Upload, Navigation, Camera, Settings, Shield, Activity } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,6 +23,7 @@ import { WasteReportsMap } from "@/components/WasteReportsMap";
 import { CleanerRouteOptimizer } from "@/components/CleanerRouteOptimizer";
 import { CleanersOverviewMap } from "@/components/CleanersOverviewMap";
 import { Link } from "react-router-dom";
+import { MobileNav } from "@/components/MobileNav";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { LocationPicker } from "@/components/LocationPicker";
@@ -1491,13 +1492,22 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button asChild variant="outline" size="sm" className="neon-border text-xs font-mono tracking-wider">
+            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex neon-border text-xs font-mono tracking-wider">
               <Link to="/performance" className="flex items-center gap-2">
                 <BarChart3 className="h-3.5 w-3.5" />
                 Performance
               </Link>
             </Button>
             <NotificationBell />
+            <MobileNav
+              links={[
+                { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+                { label: "Admin Panel", to: "/admin", icon: <Shield className="h-4 w-4" /> },
+                { label: "Performance", to: "/performance", icon: <TrendingUp className="h-4 w-4" /> },
+                { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+                { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+              ]}
+            />
           </div>
         </div>
       </header>

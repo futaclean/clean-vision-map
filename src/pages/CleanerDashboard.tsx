@@ -11,10 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Leaf, RefreshCw, ClipboardList, CheckCircle, Clock, TrendingUp, Eye, MapPin, Route, Camera, Upload, X, XCircle, Sparkles, BarChart3, Settings, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CleanerRouteView } from "@/components/CleanerRouteView";
 import { NotificationBell } from "@/components/NotificationBell";
+import { MobileNav } from "@/components/MobileNav";
 import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
@@ -537,6 +538,14 @@ const CleanerDashboard = () => {
             <Button onClick={fetchReports} variant="ghost" size="icon" className="h-9 w-9">
               <RefreshCw className="h-4 w-4" />
             </Button>
+            <MobileNav
+              links={[
+                { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+                { label: "Cleaner Panel", to: "/cleaner", icon: <ClipboardList className="h-4 w-4" /> },
+                { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+                { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+              ]}
+            />
           </div>
         </div>
       </header>
