@@ -197,10 +197,12 @@ export default function PerformanceDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading performance data...</p>
+          <div className="w-12 h-12 neon-border rounded-xl flex items-center justify-center mx-auto mb-4">
+            <TrendingUp className="h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase">Loading performance data...</p>
         </div>
       </div>
     );
@@ -208,20 +210,20 @@ export default function PerformanceDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate("/admin")}>
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" onClick={() => navigate("/admin")} className="h-9 w-9">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Performance Dashboard</h1>
-              <p className="text-muted-foreground mt-1">Track cleaner metrics and team performance</p>
+            <div className="flex flex-col">
+              <span className="text-sm font-display font-bold text-foreground leading-tight">Performance Dashboard</span>
+              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Cleaner Metrics</span>
             </div>
           </div>
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[160px] neon-border font-mono text-xs">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -232,60 +234,29 @@ export default function PerformanceDashboard() {
             </SelectContent>
           </Select>
         </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 pt-24">
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Completed</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{totalCompleted}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Across all cleaners
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Completion Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{avgCompletionRate.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Team average
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{avgResponseTime.toFixed(1)}h</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                From assignment to action
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Cleaners</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{cleanerMetrics.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                With assignments
-              </p>
-            </CardContent>
-          </Card>
+          {[
+            { title: "Total Completed", value: totalCompleted, sub: "Across all cleaners", icon: Target },
+            { title: "Avg Completion Rate", value: `${avgCompletionRate.toFixed(1)}%`, sub: "Team average", icon: TrendingUp },
+            { title: "Avg Response Time", value: `${avgResponseTime.toFixed(1)}h`, sub: "From assignment to action", icon: Clock },
+            { title: "Active Cleaners", value: cleanerMetrics.length, sub: "With assignments", icon: Award },
+          ].map((card, i) => (
+            <Card key={i} className="neon-border shadow-card bg-card/80 backdrop-blur-sm hover:shadow-glow transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-[10px] font-mono tracking-wider uppercase text-muted-foreground">{card.title}</CardTitle>
+                <card.icon className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-display font-bold text-foreground">{card.value}</div>
+                <p className="text-xs font-mono text-muted-foreground mt-1">{card.sub}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Charts and Leaderboards */}

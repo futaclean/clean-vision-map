@@ -262,25 +262,26 @@ const ReportTracking = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon" className="text-white">
-              <Link to="/dashboard">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="flex items-center gap-2">
-              <div className="bg-white rounded-full p-2">
-                <Leaf className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-xl font-bold text-white">Report Tracking</span>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center">
+          <Button asChild variant="ghost" size="icon" className="h-9 w-9 mr-3">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2.5">
+            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+              <Leaf className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-display font-bold text-foreground leading-tight">Report Tracking</span>
+              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Live Status</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="container mx-auto px-4 py-8 pt-24 max-w-6xl">
         {/* Report Status Overview */}
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2">

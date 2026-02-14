@@ -1448,8 +1448,10 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-12 h-12 neon-border rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Leaf className="h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase">Loading Admin Panel...</p>
         </div>
       </div>
     );
@@ -1467,47 +1469,51 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="icon" className="text-white">
-                <Link to="/dashboard">
-                  <ArrowLeft className="h-5 w-5" />
-                </Link>
-              </Button>
-              <div className="flex items-center gap-2">
-                <div className="bg-white rounded-full p-2">
-                  <Leaf className="h-5 w-5 text-primary" />
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                  <Leaf className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-bold text-white">Admin Dashboard</span>
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full animate-pulse" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground leading-tight">Admin Dashboard</span>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">System Control</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button asChild variant="secondary" size="sm">
-                <Link to="/performance" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Performance
-                </Link>
-              </Button>
-              <NotificationBell />
-            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="outline" size="sm" className="neon-border text-xs font-mono tracking-wider">
+              <Link to="/performance" className="flex items-center gap-2">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Performance
+              </Link>
+            </Button>
+            <NotificationBell />
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="shadow-card border-border">
+            <Card key={index} className="neon-border shadow-card bg-card/80 backdrop-blur-sm hover:shadow-glow transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-1">{stat.label}</p>
+                    <p className="text-3xl font-display font-bold text-foreground">{stat.value}</p>
                   </div>
-                  <div className="bg-gradient-card rounded-xl p-3">
+                  <div className="neon-border rounded-xl p-3 bg-primary/5">
                     <stat.icon className="h-6 w-6 text-primary" />
                   </div>
                 </div>

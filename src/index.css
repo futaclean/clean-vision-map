@@ -10,7 +10,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 150 15% 97%;
     --foreground: 160 30% 10%;
 
     --card: 0 0% 100%;
@@ -23,11 +23,11 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
     --primary-glow: 166 82% 50%;
 
-    --secondary: 152 30% 92%;
+    --secondary: 152 20% 92%;
     --secondary-foreground: 160 30% 10%;
 
-    --muted: 160 15% 96%;
-    --muted-foreground: 160 10% 45%;
+    --muted: 160 10% 94%;
+    --muted-foreground: 160 10% 40%;
 
     --accent: 166 70% 45%;
     --accent-foreground: 0 0% 100%;
@@ -35,25 +35,25 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 160 20% 90%;
-    --input: 160 20% 90%;
+    --border: 160 15% 88%;
+    --input: 160 15% 88%;
     --ring: 166 72% 34%;
 
     --radius: 0.75rem;
     
     /* Premium gradients */
     --gradient-primary: linear-gradient(135deg, hsl(166 72% 34%) 0%, hsl(180 60% 40%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(180 40% 8%) 0%, hsl(166 50% 10%) 50%, hsl(150 30% 6%) 100%);
-    --gradient-card: linear-gradient(135deg, hsla(166 72% 34% / 0.03) 0%, hsla(180 60% 40% / 0.08) 100%);
-    --gradient-glass: linear-gradient(135deg, hsla(0 0% 100% / 0.9) 0%, hsla(0 0% 100% / 0.7) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(150 15% 97%) 0%, hsl(160 20% 94%) 50%, hsl(150 15% 97%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(166 72% 34% / 0.04) 0%, hsla(180 60% 40% / 0.08) 100%);
+    --gradient-glass: linear-gradient(135deg, hsla(0 0% 100% / 0.95) 0%, hsla(0 0% 100% / 0.8) 100%);
     --gradient-shine: linear-gradient(90deg, transparent, hsla(0 0% 100% / 0.4), transparent);
     
     /* Premium shadows */
-    --shadow-glow: 0 8px 40px hsla(166 72% 34% / 0.25);
-    --shadow-card: 0 4px 24px hsla(180 30% 20% / 0.06);
-    --shadow-elevated: 0 20px 60px hsla(180 30% 20% / 0.12);
-    --shadow-button: 0 4px 14px hsla(166 72% 34% / 0.35);
-    --shadow-neon: 0 0 30px hsla(166 72% 50% / 0.4), 0 0 60px hsla(166 72% 50% / 0.2);
+    --shadow-glow: 0 8px 40px hsla(166 72% 34% / 0.15);
+    --shadow-card: 0 4px 24px hsla(160 30% 20% / 0.08);
+    --shadow-elevated: 0 20px 60px hsla(160 30% 20% / 0.1);
+    --shadow-button: 0 4px 14px hsla(166 72% 34% / 0.25);
+    --shadow-neon: 0 0 20px hsla(166 72% 50% / 0.2), 0 0 40px hsla(166 72% 50% / 0.1);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -129,7 +129,7 @@ All colors MUST be HSL.
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-xl border border-white/20 shadow-elevated;
+    @apply backdrop-blur-xl border border-border/50 shadow-elevated;
     background: var(--gradient-glass);
   }
   
@@ -143,7 +143,12 @@ All colors MUST be HSL.
   }
 
   .neon-border {
-    border: 1px solid hsla(166, 72%, 50%, 0.3);
+    border: 1px solid hsla(166, 72%, 50%, 0.25);
+    box-shadow: inset 0 0 15px hsla(166, 72%, 50%, 0.03), 0 0 15px hsla(166, 72%, 50%, 0.06);
+  }
+
+  .dark .neon-border {
+    border-color: hsla(166, 72%, 50%, 0.3);
     box-shadow: inset 0 0 20px hsla(166, 72%, 50%, 0.05), 0 0 20px hsla(166, 72%, 50%, 0.1);
   }
 
