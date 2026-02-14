@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, TrendingUp, Clock, MapPin, Award, Target, Zap } from "lucide-react";
+import { ArrowLeft, TrendingUp, Clock, MapPin, Award, Target, Zap, BarChart3, Camera, Settings, Shield } from "lucide-react";
+import { MobileNav } from "@/components/MobileNav";
 import { useToast } from "@/hooks/use-toast";
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -222,17 +223,28 @@ export default function PerformanceDashboard() {
               <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Cleaner Metrics</span>
             </div>
           </div>
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[160px] neon-border font-mono text-xs">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="14">Last 14 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-[130px] sm:w-[160px] neon-border font-mono text-xs">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="14">Last 14 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <MobileNav
+              links={[
+                { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+                { label: "Admin Panel", to: "/admin", icon: <Shield className="h-4 w-4" /> },
+                { label: "Performance", to: "/performance", icon: <TrendingUp className="h-4 w-4" /> },
+                { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+                { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+              ]}
+            />
+          </div>
         </div>
       </header>
 

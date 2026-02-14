@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Leaf, MapPin, Calendar, User, CheckCircle2, Clock, AlertCircle, XCircle, Truck, Sparkles } from "lucide-react";
+import { ArrowLeft, Leaf, MapPin, Calendar, User, CheckCircle2, Clock, AlertCircle, XCircle, Truck, Sparkles, BarChart3, Camera, Settings } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { BeforeAfterImage } from "@/components/BeforeAfterImage";
 import { AIAnalysisDialog } from "@/components/AIAnalysisDialog";
+import { MobileNav } from "@/components/MobileNav";
 
 interface WasteReport {
   id: string;
@@ -263,21 +264,30 @@ const ReportTracking = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
-        <div className="container mx-auto px-4 h-16 flex items-center">
-          <Button asChild variant="ghost" size="icon" className="h-9 w-9 mr-3">
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div className="flex items-center gap-2.5">
-            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
-              <Leaf className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-display font-bold text-foreground leading-tight">Report Tracking</span>
-              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Live Status</span>
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center">
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9 mr-3">
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2.5">
+              <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                <Leaf className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground leading-tight">Report Tracking</span>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Live Status</span>
+              </div>
             </div>
           </div>
+          <MobileNav
+            links={[
+              { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+              { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+              { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+            ]}
+          />
         </div>
       </header>
 

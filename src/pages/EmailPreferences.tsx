@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mail, Scan } from "lucide-react";
+import { ArrowLeft, Mail, Scan, BarChart3, Camera, Settings } from "lucide-react";
+import { MobileNav } from "@/components/MobileNav";
 
 export default function EmailPreferences() {
   const { user, loading: authLoading } = useAuth();
@@ -132,19 +133,28 @@ export default function EmailPreferences() {
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
-        <div className="container mx-auto px-4 h-16 flex items-center">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="h-9 w-9 mr-3">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2.5">
-            <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
-              <Mail className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-display font-bold text-foreground leading-tight">Email Preferences</span>
-              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Notification Settings</span>
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="h-9 w-9 mr-3">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2.5">
+              <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                <Mail className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground leading-tight">Email Preferences</span>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Notification Settings</span>
+              </div>
             </div>
           </div>
+          <MobileNav
+            links={[
+              { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+              { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+              { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+            ]}
+          />
         </div>
       </header>
 

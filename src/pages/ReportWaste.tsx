@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, MapPin, Upload, ArrowLeft, Loader2, Leaf } from "lucide-react";
+import { Camera, MapPin, Upload, ArrowLeft, Loader2, Leaf, BarChart3, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { MobileNav } from "@/components/MobileNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -443,6 +444,13 @@ const ReportWaste = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-display font-bold text-foreground hidden sm:inline">Waste-Track AI</span>
+            <MobileNav
+              links={[
+                { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+                { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
+                { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
+              ]}
+            />
           </div>
         </div>
       </header>
