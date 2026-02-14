@@ -423,27 +423,31 @@ const ReportWaste = () => {
       <SubmissionProgress currentStep={submissionStep} />
       
       {/* Header */}
-      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" asChild className="text-white hover:bg-white/10">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild className="h-9 w-9">
               <Link to="/dashboard">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+                <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-
-            <div className="flex items-center gap-2">
-              <div className="bg-white rounded-full p-2">
-                <Leaf className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                <Camera className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-white hidden sm:inline">Waste-Track AI</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground leading-tight">Report Waste</span>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Submit Report</span>
+              </div>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-display font-bold text-foreground hidden sm:inline">Waste-Track AI</span>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-8 pt-24 max-w-2xl">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-4xl font-bold text-foreground mb-2">
             Report Waste

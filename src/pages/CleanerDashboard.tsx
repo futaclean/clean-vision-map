@@ -438,8 +438,10 @@ const CleanerDashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-12 h-12 neon-border rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Leaf className="h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <p className="text-xs font-mono text-muted-foreground tracking-wider uppercase">Loading Cleaner Panel...</p>
         </div>
       </div>
     );
@@ -450,168 +452,119 @@ const CleanerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-primary border-b border-border/50 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="icon" className="text-white">
-                <Link to="/dashboard">
-                  <ArrowLeft className="h-5 w-5" />
-                </Link>
-              </Button>
-              <div className="flex items-center gap-2">
-                <div className="bg-white rounded-full p-2">
-                  <Leaf className="h-5 w-5 text-primary" />
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <div className="bg-gradient-primary rounded-xl p-2 shadow-button">
+                  <Leaf className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-bold text-white">Cleaner Dashboard</span>
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full animate-pulse" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground leading-tight">Cleaner Dashboard</span>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Field Operations</span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              {/* Availability Status Selector */}
-              <Card className="bg-card/90 border-white/20 p-3">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-white">Your Status</Label>
-                  <Select 
-                    value={availabilityStatus} 
-                    onValueChange={(value: 'available' | 'busy' | 'off_duty') => updateAvailabilityStatus(value)}
-                    disabled={isUpdatingAvailability}
-                  >
-                    <SelectTrigger className="w-[140px] h-8 text-xs bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="available">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                          <span>Available</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="busy">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                          <span>Busy</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="off_duty">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                          <span>Off Duty</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </Card>
-
-              {/* GPS Tracking Toggle */}
-              <Card className="bg-card/90 border-white/20 p-3">
-                <div className="flex items-center gap-3">
-                  <Label htmlFor="location-tracking" className="cursor-pointer text-sm font-medium">
-                    {isTracking ? (
-                      <span className="flex items-center gap-2">
-                        <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                        </span>
-                        <span>Live Tracking</span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Enable Tracking</span>
-                    )}
-                  </Label>
-                  <Switch
-                    id="location-tracking"
-                    checked={trackingEnabled}
-                    onCheckedChange={setTrackingEnabled}
-                  />
-                </div>
-                {trackingError && (
-                  <p className="text-xs text-destructive mt-1">{trackingError}</p>
-                )}
-              </Card>
-              
-              <NotificationBell />
-              <Button onClick={fetchReports} variant="outline" size="sm" className="text-white border-white hover:bg-white/10">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Availability Status */}
+            <div className="hidden md:flex items-center gap-2 neon-border rounded-lg px-3 py-1.5 bg-card/50">
+              <span className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase">Status</span>
+              <Select 
+                value={availabilityStatus} 
+                onValueChange={(value: 'available' | 'busy' | 'off_duty') => updateAvailabilityStatus(value)}
+                disabled={isUpdatingAvailability}
+              >
+                <SelectTrigger className="w-[120px] h-7 text-xs border-0 bg-transparent p-0 font-mono">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                      <span>Available</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="busy">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                      <span>Busy</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="off_duty">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      <span>Off Duty</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* GPS Tracking Toggle */}
+            <div className="hidden md:flex items-center gap-2 neon-border rounded-lg px-3 py-1.5 bg-card/50">
+              <Label htmlFor="location-tracking" className="cursor-pointer text-[10px] font-mono tracking-wider">
+                {isTracking ? (
+                  <span className="flex items-center gap-1.5 text-primary">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    GPS LIVE
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground uppercase">GPS Off</span>
+                )}
+              </Label>
+              <Switch
+                id="location-tracking"
+                checked={trackingEnabled}
+                onCheckedChange={setTrackingEnabled}
+              />
+            </div>
+            {trackingError && (
+              <p className="text-xs text-destructive">{trackingError}</p>
+            )}
+              
+            <NotificationBell />
+            <Button onClick={fetchReports} variant="ghost" size="icon" className="h-9 w-9">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <Card className="shadow-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Assigned</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.total}</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          {[
+            { label: "Total Assigned", value: stats.total, icon: ClipboardList },
+            { label: "Pending", value: stats.pending, icon: Clock },
+            { label: "In Progress", value: stats.inProgress, icon: RefreshCw },
+            { label: "Completed", value: stats.completed, icon: CheckCircle },
+            { label: "Completion Rate", value: `${stats.completionRate}%`, icon: TrendingUp },
+          ].map((stat, i) => (
+            <Card key={i} className="neon-border shadow-card bg-card/80 backdrop-blur-sm hover:shadow-glow transition-all duration-300">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase mb-1">{stat.label}</p>
+                    <p className="text-2xl font-display font-bold text-foreground">{stat.value}</p>
+                  </div>
+                  <div className="neon-border rounded-lg p-2.5 bg-primary/5">
+                    <stat.icon className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-                <div className="bg-gradient-card rounded-xl p-3">
-                  <ClipboardList className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Pending</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.pending}</p>
-                </div>
-                <div className="bg-gradient-card rounded-xl p-3">
-                  <Clock className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">In Progress</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.inProgress}</p>
-                </div>
-                <div className="bg-gradient-card rounded-xl p-3">
-                  <RefreshCw className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Completed</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.completed}</p>
-                </div>
-                <div className="bg-gradient-card rounded-xl p-3">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Completion Rate</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.completionRate}%</p>
-                </div>
-                <div className="bg-gradient-card rounded-xl p-3">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <Tabs defaultValue="all" className="space-y-6">
