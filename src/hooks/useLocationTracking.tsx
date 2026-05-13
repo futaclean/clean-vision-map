@@ -15,7 +15,7 @@ export const useLocationTracking = (enabled: boolean) => {
     }
 
     let watchId: number | null = null;
-    let updateInterval: NodeJS.Timeout | null = null;
+    let updateInterval: ReturnType<typeof setInterval> | null = null;
 
     const startTracking = async () => {
       if (!navigator.geolocation) {
