@@ -286,6 +286,7 @@ const Auth = () => {
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-primary/60" />
                         <Input id="signup-password" type="password" placeholder="••••••••" className={inputClasses} value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
                       </div>
+                      <p className="text-[10px] font-mono text-muted-foreground/70">Min 8 characters, with uppercase, lowercase, and a number</p>
                     </div>
                     <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90 shadow-button font-semibold text-sm tracking-wide" disabled={isLoading}>
                       {isLoading ? (
