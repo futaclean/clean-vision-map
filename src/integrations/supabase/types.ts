@@ -179,6 +179,39 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_bins: {
+        Row: {
+          bin_id: string
+          bin_name: string
+          created_at: string
+          fill_level: number
+          last_updated: string
+          latitude: number
+          longitude: number
+          status: string
+        }
+        Insert: {
+          bin_id: string
+          bin_name?: string
+          created_at?: string
+          fill_level?: number
+          last_updated?: string
+          latitude: number
+          longitude: number
+          status?: string
+        }
+        Update: {
+          bin_id?: string
+          bin_name?: string
+          created_at?: string
+          fill_level?: number
+          last_updated?: string
+          latitude?: number
+          longitude?: number
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -268,6 +301,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      ingest_bin_reading: {
+        Args: {
+          _bin_id: string
+          _fill_level: number
+          _latitude: number
+          _longitude: number
+          _status: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
