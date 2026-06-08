@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,38 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logoImage from "/logo-waste-track.png?url";
+
+const emailSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Email is required" })
+  .email({ message: "Invalid email address" })
+  .max(255, { message: "Email must be less than 255 characters" });
+
+const passwordSchema = z
+  .string()
+  .min(8, { message: "Password must be at least 8 characters" })
+  .max(72, { message: "Password must be less than 72 characters" })
+  .regex(/[A-Z]/, { message: "Password must contain an uppercase letter" })
+  .regex(/[a-z]/, { message: "Password must contain a lowercase letter" })
+  .regex(/[0-9]/, { message: "Password must contain a number" });
+
+const nameSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Name is required" })
+  .max(100, { message: "Name must be less than 100 characters" });
+
+const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
+const signupSchema = z.object({
+  fullName: nameSchema,
+  email: emailSchema,
+  password: passwordSchema,
+});
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -34,9 +67,18 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
+    if (!result.success) {
+      toast({
+        title: "Invalid input",
+        description: result.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      await signIn(loginEmail, loginPassword);
+      await signIn(result.data.email, result.data.password);
     } finally {
       setIsLoading(false);
     }
@@ -44,9 +86,22 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = signupSchema.safeParse({
+      fullName: signupName,
+      email: signupEmail,
+      password: signupPassword,
+    });
+    if (!result.success) {
+      toast({
+        title: "Invalid input",
+        description: result.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      await signUp(signupEmail, signupPassword, signupName);
+      await signUp(result.data.email, result.data.password, result.data.fullName);
     } finally {
       setIsLoading(false);
     }
@@ -54,9 +109,18 @@ const Auth = () => {
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = emailSchema.safeParse(resetEmail);
+    if (!result.success) {
+      toast({
+        title: "Invalid email",
+        description: result.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(result.data, {
         redirectTo: `${window.location.origin}/auth`,
       });
       if (error) throw error;
