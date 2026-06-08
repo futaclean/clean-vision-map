@@ -20,6 +20,7 @@ import PerformanceDashboard from "./pages/PerformanceDashboard";
 import ReportWaste from "./pages/ReportWaste";
 import ReportTracking from "./pages/ReportTracking";
 import EmailPreferences from "./pages/EmailPreferences";
+import SmartBins from "./pages/SmartBins";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const AnimatedRoutes = () => {
         <Route path="/report" element={<AnimatedPage><ReportWaste /></AnimatedPage>} />
         <Route path="/report/:reportId" element={<AnimatedPage><ReportTracking /></AnimatedPage>} />
         <Route path="/admin" element={<AnimatedPage><AdminDashboard /></AnimatedPage>} />
+        <Route path="/admin/smart-bins" element={<AnimatedPage><SmartBins /></AnimatedPage>} />
         <Route path="/cleaner" element={<AnimatedPage><CleanerDashboard /></AnimatedPage>} />
         <Route path="/performance" element={<AnimatedPage><PerformanceDashboard /></AnimatedPage>} />
         <Route path="/preferences" element={<AnimatedPage><EmailPreferences /></AnimatedPage>} />
