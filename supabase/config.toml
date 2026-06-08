@@ -4,13 +4,13 @@ project_id = "eptnavmuprfszcyflbne"
 verify_jwt = true
 
 [functions.send-cleaner-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-report-summary]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-status-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.analyze-cleanup]
 verify_jwt = true
