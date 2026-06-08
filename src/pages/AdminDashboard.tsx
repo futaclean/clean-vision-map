@@ -1498,11 +1498,18 @@ const AdminDashboard = () => {
                 Performance
               </Link>
             </Button>
+            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex neon-border text-xs font-mono tracking-wider">
+              <Link to="/admin/smart-bins" className="flex items-center gap-2">
+                <Activity className="h-3.5 w-3.5" />
+                Smart Bins
+              </Link>
+            </Button>
             <NotificationBell />
             <MobileNav
               links={[
                 { label: "Dashboard", to: "/dashboard", icon: <BarChart3 className="h-4 w-4" /> },
                 { label: "Admin Panel", to: "/admin", icon: <Shield className="h-4 w-4" /> },
+                { label: "Smart Bins", to: "/admin/smart-bins", icon: <Activity className="h-4 w-4" /> },
                 { label: "Performance", to: "/performance", icon: <TrendingUp className="h-4 w-4" /> },
                 { label: "Report Waste", to: "/report", icon: <Camera className="h-4 w-4" /> },
                 { label: "Preferences", to: "/preferences", icon: <Settings className="h-4 w-4" /> },
